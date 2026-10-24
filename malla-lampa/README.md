@@ -17,6 +17,7 @@ referensbilder – det är inte originalfilerna från Cults3D.
 | `3mf/bas.3mf` | Väggbas med sockelhylla, kabelurtag, buntbandsspår och 3 försänkta skruvhål | 238 × 238 × 66 |
 | `3mf/skarm_nat_front.3mf` | Skärm med nätmönster runt om **och** på fronten | 248 × 248 × 97 |
 | `3mf/skarm_hel_front.3mf` | Skärm med nät runt om och hel front (bländar mindre) | 248 × 248 × 97 |
+| `3mf/skarm_snabb.3mf` | Glesare nät (≈ 4 000 hål i stället för ≈ 13 000) och hel front – betydligt kortare utskriftstid | 248 × 248 × 97 |
 
 Skriv ut basen + **en** av skärmarna. Alla delar ligger redan i rätt
 utskriftsläge (basen med baksidan mot plattan, skärmen med fronten mot plattan)
@@ -36,7 +37,7 @@ de bygger sig själva.
 | Sömposition | Valfri | *Aligned* eller *Back* |
 
 Tips:
-- Skärmen har ca 13 000 små hål – räkna med lång utskriftstid. Sänk gärna
+- Nätskärmen med nätfront har ca 13 000 små hål (≈ 15 h vid 0,20 mm) – välj `skarm_snabb` om det går för långsamt. Sänk gärna
   *travel*-hastigheten något om den börjar dra trådar, och slå på
   *Avoid crossing walls*.
 - Torka filamentet först (särskilt PETG), annars blir det mycket strängar i

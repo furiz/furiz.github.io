@@ -7,6 +7,7 @@ Genererar filer för Bambu Lab A1 (byggyta 256 x 256 x 256 mm):
   3mf/bas.3mf                – väggbas med sockelhylla, kabelurtag och skruvhål
   3mf/skarm_nat_front.3mf    – skärm med nätmönster även på fronten
   3mf/skarm_hel_front.3mf    – skärm med hel (ljusspridande) front
+  3mf/skarm_snabb.3mf        – glesare nät + hel front, betydligt kortare utskriftstid
 
 Kör:  pip install manifold3d numpy
       python3 generate.py          # 3MF-filer
@@ -79,6 +80,8 @@ MESH_HOLE_K = 0.56        # andel av delningen som är hål (strängbredd ~1,1 m
 MESH_Z0 = 11.0            # nätet börjar här (från fronten)
 MESH_Z1 = 79.0            # och slutar här
 FRONT_MESH_R = 104.0      # nätets radie på fronten
+SNABB_MESH_PITCH = 5.0    # glesare nät för varianten "skarm_snabb"
+SNABB_MESH_HOLE_K = 0.62  # strängbredd ~1,3 mm, hål ~3,1 mm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "stl")
@@ -205,9 +208,16 @@ def profile_samples(z_start):
 
 def shade_shell():
     zs = np.unique(np.concatenate([profile_samples(0.0), [SHADE_H]]))
-    outer = [(0.0, 0.0)] + [(shade_outer_r(z), z) for z in zs] + [(0.0, SHADE_H)]
-    inner_z = np.unique(np.concatenate([profile_samples(FRONT_T), [SHADE_H + 1]]))
-    inner = [(0.0, FRONT_T)] + [(shade_inner_r(z), z) for z in inner_z] + [(0.0, SHADE_H + 1)]
+    rs = np.array([shade_outer_r(z) for z in zs])
+    outer = [(0.0, 0.0)] + list(zip(rs, zs)) + [(0.0, SHADE_H)]
+    # Insidan = ytterprofilen förskjuten längs normalen (ger jämn väggtjocklek
+    # och inga trappsteg vid profilens knyckar, t.ex. där kragen börjar).
+    dr, dz = np.gradient(rs), np.gradient(zs)
+    ln = np.hypot(dr, dz)
+    ir, iz = rs - SHADE_T * dz / ln, zs + SHADE_T * dr / ln
+    keep = (iz > FRONT_T + 0.2) & (iz < SHADE_BODY_H + 1.0)
+    inner = ([(0.0, FRONT_T), (shade_inner_r(FRONT_T), FRONT_T)] + list(zip(ir[keep], iz[keep]))
+             + [(COLLAR_R_IN, SHADE_BODY_H + 1.5), (COLLAR_R_IN, SHADE_H + 1), (0.0, SHADE_H + 1)])
     # segment = 2 x antal nätkolumner så att facetterna linjerar med hålen
     seg = 2 * mesh_columns()
     return revolve(outer, seg) - revolve(inner, seg)
@@ -220,7 +230,10 @@ def crush_ribs():
     for i in range(CRUSH_RIBS):
         a = 2 * math.pi * (i + 0.5) / CRUSH_RIBS
         r = COLLAR_R_OUT + CRUSH_RIB_PROUD - CRUSH_RIB_R
-        ribs.append(cyl(CRUSH_RIB_R, h, 16).translate([r * math.cos(a), r * math.sin(a), z0]))
+        rib = cyl(CRUSH_RIB_R, h, 16).translate([r, 0, z0])
+        # fasad underkant så att listen inte blir ett överhäng
+        tip = cyl(0.05, 0.01, 8).translate([COLLAR_R_OUT - 0.3, 0, z0 - 1.2])
+        ribs.append(Manifold.batch_hull([rib, tip]).rotate([0, 0, math.degrees(a)]))
     return Manifold.compose(ribs)
 
 
@@ -335,6 +348,9 @@ if __name__ == "__main__":
         ("skarm_nat_front", make_shade(mesh_front=True)),
         ("skarm_hel_front", make_shade(mesh_front=False)),
     ]
+    # Snabbare variant: glesare nät (ungefär halva antalet hål) och hel front
+    MESH_PITCH, MESH_HOLE_K = SNABB_MESH_PITCH, SNABB_MESH_HOLE_K
+    parts.append(("skarm_snabb", make_shade(mesh_front=False)))
     for name, part in parts:
         write_3mf(part, os.path.join(OUT_3MF, name + ".3mf"), name)
         if stl:

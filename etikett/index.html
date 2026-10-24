@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Etikett M110</title>
+<meta name="theme-color" content="#e5533d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Pacifico&family=Permanent+Marker&family=Roboto:wght@400;700;900&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<script src="lib/qrcode.js"></script>
+<script src="lib/JsBarcode.all.min.js"></script>
+<style>
+:root {
+  --bg: #f4f4f5; --card: #fff; --text: #1c1c1e; --muted: #8e8e93; --line: #e5e5ea;
+  --accent: #e5533d; --accent-soft: #fdecea; --ok: #34c759;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111113; --card: #1c1c1f; --text: #f2f2f7; --muted: #98989f; --line: #2c2c30;
+    --accent-soft: #3a1d18;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+button, input, select, textarea { font: inherit; color: inherit; }
+header { display: flex; align-items: center; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+header h1 { font-size: 18px; margin: 0; flex: 1; }
+.printer-btn { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--bg);
+  border-radius: 999px; padding: 6px 14px 6px 10px; cursor: pointer; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+.dot.on { background: var(--ok); }
+main { max-width: 760px; margin: 0 auto; padding: 16px; }
+.view { display: none; } .view.active { display: block; }
+.card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+.card h2 { font-size: 17px; margin: 0 0 12px; }
+.warn { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 14px; }
+.warn b { color: var(--accent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.tpl { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer; text-align: left; padding: 0; position: relative; }
+.tpl canvas { display: block; width: 100%; background: #fff; border-bottom: 1px solid var(--line); image-rendering: pixelated; }
+.tpl .meta { padding: 8px 10px; }
+.tpl .name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tpl .size { font-size: 12px; color: var(--muted); }
+.tpl .del { position: absolute; top: 6px; right: 6px; border: 0; background: rgba(0,0,0,.55); color: #fff; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 14px; }
+.chip.sel { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.btn { border: 0; border-radius: 12px; padding: 12px 16px; cursor: pointer; background: var(--bg); border: 1px solid var(--line); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.btn.small { padding: 7px 11px; font-size: 14px; border-radius: 10px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row > .grow { flex: 1; }
+label.f { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+input[type=text], input[type=number], select, textarea { width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg); }
+textarea { resize: vertical; min-height: 60px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.stage { background: repeating-conic-gradient(var(--line) 0 25%, transparent 0 50%) 0 0 / 16px 16px; border-radius: 12px;
+  padding: 20px; display: flex; justify-content: center; touch-action: none; }
+#editCanvas { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.25); border-radius: 6px; image-rendering: pixelated;
+  max-width: 100%; touch-action: none; }
+.toolbar { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 4px; }
+.toolbar .btn { white-space: nowrap; }
+.elist { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
+.tabbar button { flex: 1; border: 0; background: none; padding: 10px 0 8px; color: var(--muted); font-size: 12px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tabbar button.active { color: var(--text); font-weight: 600; }
+.tabbar svg { width: 24px; height: 24px; }
+.log { font: 12px/1.4 ui-monospace, Menlo, monospace; color: var(--muted); max-height: 140px; overflow: auto; white-space: pre-wrap; margin-top: 8px; }
+.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #222; color: #fff;
+  padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; max-width: 90vw; }
+.toast.show { opacity: 1; }
+.check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 15px; }
+dt { color: var(--muted); } dd { margin: 0; text-align: right; word-break: break-all; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Etikett</h1>
+  <button class="printer-btn" id="printerBtn"><span class="dot" id="dot"></span><span id="printerName">Anslut M110</span></button>
+</header>
+
+<main>
+  <div class="warn" id="noBt" hidden>
+    <b>Bluetooth stöds inte i den här webbläsaren.</b><br>
+    På iPhone/iPad: Safari saknar Web Bluetooth – öppna sidan i appen <b>Bluefy</b> (gratis i App Store).
+    På Android/dator: använd Chrome eller Edge.
+  </div>
+
+  <!-- HEM -->
+  <section class="view active" id="view-home">
+    <div class="card">
+      <div class="row">
+        <button class="btn primary grow" id="newBtn">＋ Ny etikett</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Mina mallar</h2>
+      <div class="grid" id="myGrid"></div>
+      <p id="myEmpty" style="color:var(--muted);font-size:14px;margin:0">Inga sparade mallar ännu. Spara från redigeraren.</p>
+    </div>
+    <div class="card">
+      <h2>Utskriftshistorik</h2>
+      <div class="grid" id="histGrid"></div>
+      <p id="histEmpty" style="color:var(--muted);font-size:14px;margin:0">Inget utskrivet ännu.</p>
+    </div>
+  </section>
+
+  <!-- MALLAR -->
+  <section class="view" id="view-templates">
+    <div class="card">
+      <div class="chips" id="catChips"></div>
+      <div class="chips" id="sizeChips"></div>
+      <div class="grid" id="tplGrid"></div>
+    </div>
+  </section>
+
+  <!-- REDIGERA -->
+  <section class="view" id="view-edit">
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        <input type="text" id="labelName" class="grow" placeholder="Namn på etikett">
+        <select id="sizeSel" style="width:auto"></select>
+      </div>
+      <div class="stage" id="stage"><canvas id="editCanvas"></canvas></div>
+      <div class="toolbar">
+        <button class="btn small" data-add="text">＋ Text</button>
+        <button class="btn small" data-add="image">＋ Bild</button>
+        <button class="btn small" data-add="qr">＋ QR</button>
+        <button class="btn small" data-add="barcode">＋ Streckkod</button>
+        <button class="btn small" data-add="frame">＋ Ram</button>
+        <button class="btn small" data-add="line">＋ Linje</button>
+        <button class="btn small" data-add="date">＋ Datum</button>
+      </div>
+      <div class="elist" id="elist"></div>
+    </div>
+
+    <div class="card" id="props" hidden>
+      <div class="row" style="margin-bottom:4px">
+        <h2 class="grow" id="propsTitle" style="margin:0">Element</h2>
+        <button class="btn small" id="upBtn" title="Flytta fram">▲</button>
+        <button class="btn small" id="downBtn" title="Flytta bak">▼</button>
+        <button class="btn small" id="dupBtn">Kopiera</button>
+        <button class="btn small" id="delBtn" style="color:var(--accent)">Ta bort</button>
+      </div>
+      <div id="propsBody"></div>
+    </div>
+
+    <div class="card">
+      <h2>Skriv ut</h2>
+      <div class="two">
+        <div><label class="f">Antal kopior</label><input type="number" id="copies" min="1" max="99" value="1"></div>
+        <div><label class="f">Papperstyp</label>
+          <select id="media"><option value="10">Etiketter med mellanrum</option><option value="11">Löpande rulle</option><option value="38">Etiketter med svart markering</option></select></div>
+        <div><label class="f">Svärta <span id="densV"></span></label><input type="range" id="density" min="1" max="15" value="10"></div>
+        <div><label class="f">Hastighet <span id="speedV"></span></label><input type="range" id="speed" min="1" max="5" value="3"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="rot180"> Rotera 180° vid utskrift</label>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary grow" id="printBtn">🖨 Skriv ut</button>
+        <button class="btn" id="saveBtn">Spara mall</button>
+        <button class="btn" id="pngBtn">PNG</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKRIVARE -->
+  <section class="view" id="view-printer">
+    <div class="card">
+      <h2>Skrivare</h2>
+      <dl>
+        <dt>Enhet</dt><dd id="pName">–</dd>
+        <dt>Status</dt><dd id="pStatus">Inte ansluten</dd>
+        <dt>Tjänst</dt><dd id="pSvc">–</dd>
+      </dl>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary grow" id="connectBtn">Sök och anslut</button>
+        <button class="btn" id="disconnectBtn" style="color:var(--accent)" disabled>Koppla från</button>
+      </div>
+      <button class="btn" id="testBtn" style="width:100%;margin-top:8px">Testutskrift</button>
+    </div>
+    <div class="card">
+      <h2>Avancerat</h2>
+      <div class="two">
+        <div><label class="f">Max skrivbredd (punkter)</label><input type="number" id="maxDots" value="384" min="64" max="640" step="8"></div>
+        <div><label class="f">Förskjutning X (punkter)</label><input type="number" id="offsetX" value="0" min="-200" max="200"></div>
+        <div><label class="f">Paketstorlek (byte)</label><input type="number" id="chunk" value="128" min="20" max="512"></div>
+        <div><label class="f">Paus mellan paket (ms)</label><input type="number" id="delay" value="20" min="0" max="200"></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">M110: 203 dpi (8 punkter/mm), skrivhuvud 48 mm = 384 punkter. Om utskriften hackar eller avbryts: minska paketstorleken eller öka pausen.</p>
+      <div class="log" id="log"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button data-view="home" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10l8-6 8 6v10H4z"/></svg>Hem</button>
+  <button data-view="templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 9v11"/></svg>Mallar</button>
+  <button data-view="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Redigera</button>
+  <button data-view="printer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8 13h8M9 17h6"/></svg>Skrivare</button>
+</nav>
+<input type="file" id="fileIn" accept="image/*" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const DPM = 8; // punkter per mm (203 dpi)
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('m110.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('m110.' + k, JSON.stringify(v)); } catch (e) { toast('Kunde inte spara (lagring full?)'); } }
+};
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function log(msg) {
+  const l = $('#log'); l.textContent += new Date().toLocaleTimeString() + '  ' + msg + '\n'; l.scrollTop = l.scrollHeight;
+}
+
+/* ---------- Typsnitt ---------- */
+const FONTS = [
+  ['Roboto', 'Roboto'], ['Bebas Neue', 'Bebas'], ['Pacifico', 'Pacifico'], ['Lobster', 'Lobster'],
+  ['Great Vibes', 'Great Vibes'], ['Permanent Marker', 'Marker'], ['Caveat', 'Caveat'],
+  ['Special Elite', 'Skrivmaskin'], ['Roboto Mono', 'Mono'], ['Georgia', 'Georgia (serif)']
+];
+async function loadFonts() {
+  await Promise.all(FONTS.map(([f]) => document.fonts.load(`700 40px "${f}"`).catch(() => {})));
+}
+
+/* ---------- Storlekar och mallar ---------- */
+const SIZES = [[40, 30], [50, 30], [30, 20], [40, 20], [50, 50], [40, 60], [25, 15], [50, 80]];
+
+const T = (o) => Object.assign({ id: uid(), x: 0, y: 0 }, o);
+const BUILTIN = [
+  { name: 'Pris – surdegsbröd', cat: 'Butik', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'double' }),
+    T({ type: 'text', x: 3, y: 4, w: 34, text: 'Surdegsbröd', font: 'Roboto', size: 5.5, bold: true, align: 'center' }),
+    T({ type: 'text', x: 3, y: 13, w: 34, text: '65 kr/st', font: 'Bebas Neue', size: 11, align: 'center' })] },
+  { name: 'Pris med streckkod', cat: 'Butik', w: 50, h: 30, elements: [
+    T({ type: 'frame', style: 'dashed' }),
+    T({ type: 'text', x: 3, y: 2.5, w: 44, text: 'HANDTVÅL', font: 'Roboto', size: 4.5, bold: true, align: 'center' }),
+    T({ type: 'barcode', x: 6, y: 9, w: 38, h: 9, data: '1234567890', format: 'CODE128', showText: false }),
+    T({ type: 'text', x: 3, y: 19.5, w: 44, text: '29,90 kr', font: 'Bebas Neue', size: 7.5, align: 'center' })] },
+  { name: 'Ost – pris/hg', cat: 'Butik', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'dotted' }),
+    T({ type: 'text', x: 3, y: 5, w: 34, text: 'OST', font: 'Special Elite', size: 7, align: 'center' }),
+    T({ type: 'text', x: 3, y: 15, w: 34, text: '24 kr/hg', font: 'Roboto', size: 6, bold: true, align: 'center' })] },
+  { name: 'Grattis', cat: 'Fest', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'stars' }),
+    T({ type: 'text', x: 3, y: 5, w: 34, text: 'Grattis på\nfödelsedagen!', font: 'Pacifico', size: 5, align: 'center' })] },
+  { name: 'Tack!', cat: 'Fest', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'rounded' }),
+    T({ type: 'text', x: 3, y: 7, w: 34, text: 'Tack!', font: 'Great Vibes', size: 11, align: 'center' })] },
+  { name: 'Glad Halloween', cat: 'Fest', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'ticket' }),
+    T({ type: 'text', x: 3, y: 6, w: 34, text: 'GLAD\nHALLOWEEN', font: 'Special Elite', size: 5.5, bold: true, align: 'center' })] },
+  { name: 'Sylt med datum', cat: 'Hem', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'rounded' }),
+    T({ type: 'text', x: 3, y: 4, w: 34, text: 'Hallonsylt', font: 'Lobster', size: 7, align: 'center' }),
+    T({ type: 'line', x: 8, y: 15.5, w: 24, thick: 0.3 }),
+    T({ type: 'text', x: 3, y: 18, w: 34, text: 'Kokt {datum}', font: 'Roboto', size: 3.6, align: 'center' })] },
+  { name: 'Frys – innehåll', cat: 'Hem', w: 50, h: 30, elements: [
+    T({ type: 'frame', style: 'simple' }),
+    T({ type: 'text', x: 3, y: 3, w: 44, text: 'Köttfärssås', font: 'Roboto', size: 5.5, bold: true, align: 'left' }),
+    T({ type: 'text', x: 3, y: 12, w: 44, text: '4 portioner', font: 'Roboto', size: 3.8, align: 'left' }),
+    T({ type: 'text', x: 3, y: 19, w: 44, text: 'Fryst {datum}', font: 'Roboto', size: 3.8, align: 'left' })] },
+  { name: 'Kryddburk', cat: 'Hem', w: 30, h: 20, elements: [
+    T({ type: 'frame', style: 'rounded' }),
+    T({ type: 'text', x: 2, y: 4.5, w: 26, text: 'Oregano', font: 'Caveat', size: 7, align: 'center' })] },
+  { name: 'Namnlapp', cat: 'Skola', w: 50, h: 30, elements: [
+    T({ type: 'frame', style: 'rounded' }),
+    T({ type: 'text', x: 3, y: 5, w: 44, text: 'Leo Svensson', font: 'Permanent Marker', size: 6.5, align: 'center' }),
+    T({ type: 'text', x: 3, y: 17, w: 44, text: 'Klass 1A', font: 'Roboto', size: 4, align: 'center' })] },
+  { name: 'Wi-Fi QR', cat: 'Kontor', w: 50, h: 30, elements: [
+    T({ type: 'qr', x: 2.5, y: 2.5, size: 25, data: 'WIFI:T:WPA;S:MittNätverk;P:lösenord;;' }),
+    T({ type: 'text', x: 29, y: 6, w: 19, text: 'Wi-Fi', font: 'Roboto', size: 6, bold: true, align: 'left' }),
+    T({ type: 'text', x: 29, y: 15, w: 19, text: 'Skanna för\natt ansluta', font: 'Roboto', size: 3, align: 'left' })] },
+  { name: 'Pärm / mapp', cat: 'Kontor', w: 40, h: 20, elements: [
+    T({ type: 'text', x: 1, y: 3, w: 38, text: 'KVITTON 2026', font: 'Bebas Neue', size: 9, align: 'center' })] },
+  { name: 'Kaffe', cat: 'Butik', w: 40, h: 30, elements: [
+    T({ type: 'frame', style: 'oval' }),
+    T({ type: 'text', x: 3, y: 4.5, w: 34, text: '★', font: 'Roboto', size: 3.5, align: 'center' }),
+    T({ type: 'text', x: 3, y: 9, w: 34, text: 'KAFFE', font: 'Bebas Neue', size: 9, align: 'center' }),
+    T({ type: 'text', x: 3, y: 20, w: 34, text: 'ROSTERIET', font: 'Roboto', size: 2.8, align: 'center' })] },
+  { name: 'Tom 40×30', cat: 'Tom', w: 40, h: 30, elements: [] },
+  { name: 'Tom 50×30', cat: 'Tom', w: 50, h: 30, elements: [] },
+  { name: 'Tom 50×50', cat: 'Tom', w: 50, h: 50, elements: [] }
+];
+
+/* ---------- Tillstånd ---------- */
+let label = null;      // aktuell etikett
+let selId = null;
+const imgCache = new Map(); // src -> HTMLImageElement
+const monoCache = new Map(); // key -> canvas
+
+function newLabel(w = 40, h = 30) { return { id: uid(), name: 'Ny etikett', w, h, elements: [] }; }
+
+/* ---------- Rendering ---------- */
+function todayStr() { return new Date().toLocaleDateString('sv-SE'); }
+function expand(t) { return (t || '').replace(/\{datum\}/gi, todayStr()); }
+
+function getImg(src, onload) {
+  let img = imgCache.get(src);
+  if (!img) { img = new Image(); img.onload = onload; img.src = src; imgCache.set(src, img); }
+  return img.complete && img.naturalWidth ? img : null;
+}
+
+// Gråskala + Floyd–Steinberg eller tröskel -> svartvit canvas
+function monoImage(el, img, wpx, hpx) {
+  const key = [el.src.length, el.src.slice(-40), wpx, hpx, el.threshold, el.dither, el.invert].join('|');
+  if (monoCache.has(key)) return monoCache.get(key);
+  const c = document.createElement('canvas'); c.width = wpx; c.height = hpx;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, wpx, hpx);
+  // behåll proportioner (contain)
+  const r = Math.min(wpx / img.naturalWidth, hpx / img.naturalHeight);
+  const dw = img.naturalWidth * r, dh = img.naturalHeight * r;
+  x.drawImage(img, (wpx - dw) / 2, (hpx - dh) / 2, dw, dh);
+  const id = x.getImageData(0, 0, wpx, hpx), d = id.data;
+  const g = new Float32Array(wpx * hpx);
+  for (let i = 0; i < g.length; i++) {
+    const a = d[i * 4 + 3] / 255;
+    let v = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) * a + 255 * (1 - a);
+    if (el.invert) v = 255 - v;
+    g[i] = v;
+  }
+  const th = el.threshold ?? 128;
+  for (let yy = 0; yy < hpx; yy++) for (let xx = 0; xx < wpx; xx++) {
+    const i = yy * wpx + xx, old = g[i], nv = old < th ? 0 : 255, err = old - nv;
+    g[i] = nv;
+    if (el.dither) {
+      if (xx + 1 < wpx) g[i + 1] += err * 7 / 16;
+      if (yy + 1 < hpx) {
+        if (xx > 0) g[i + wpx - 1] += err * 3 / 16;
+        g[i + wpx] += err * 5 / 16;
+        if (xx + 1 < wpx) g[i + wpx + 1] += err / 16;
+      }
+    }
+  }
+  for (let i = 0; i < g.length; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = g[i]; d[i * 4 + 3] = 255; }
+  x.putImageData(id, 0, 0);
+  if (monoCache.size > 30) monoCache.clear();
+  monoCache.set(key, c);
+  return c;
+}
+
+function fontStr(el) {
+  return `${el.italic ? 'italic ' : ''}${el.bold ? '700 ' : '400 '}${el.size * DPM}px "${el.font}", sans-serif`;
+}
+
+function drawFrame(ctx, el, W, H) {
+  const m = (el.margin ?? 1.2) * DPM, t = Math.max(1, (el.thick ?? 0.4) * DPM);
+  const x0 = m, y0 = m, w = W - 2 * m, h = H - 2 * m;
+  ctx.save(); ctx.strokeStyle = '#000'; ctx.fillStyle = '#000'; ctx.lineWidth = t;
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.stroke(); };
+  switch (el.style) {
+    case 'simple': ctx.strokeRect(x0, y0, w, h); break;
+    case 'double': ctx.strokeRect(x0, y0, w, h); ctx.lineWidth = Math.max(1, t * 0.6);
+      ctx.strokeRect(x0 + t * 2.5, y0 + t * 2.5, w - t * 5, h - t * 5); break;
+    case 'rounded': rr(x0, y0, w, h, Math.min(w, h) * 0.18); break;
+    case 'dashed': ctx.setLineDash([t * 4, t * 2.5]); rr(x0, y0, w, h, t * 3); break;
+    case 'dotted': {
+      ctx.strokeRect(x0 + t * 3, y0 + t * 3, w - t * 6, h - t * 6);
+      const step = t * 3, r = t * 0.7;
+      const dot = (x, y) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); };
+      for (let x = x0; x <= x0 + w; x += step) { dot(x, y0); dot(x, y0 + h); }
+      for (let y = y0; y <= y0 + h; y += step) { dot(x0, y); dot(x0 + w, y); }
+      break; }
+    case 'oval': ctx.beginPath(); ctx.ellipse(W / 2, H / 2, w / 2, h / 2, 0, 0, Math.PI * 2); ctx.stroke(); break;
+    case 'ticket': {
+      const r = Math.min(w, h) * 0.14;
+      ctx.beginPath();
+      ctx.moveTo(x0 + r, y0); ctx.lineTo(x0 + w - r, y0); ctx.arc(x0 + w, y0, r, Math.PI, Math.PI / 2, true);
+      ctx.lineTo(x0 + w, y0 + h - r); ctx.arc(x0 + w, y0 + h, r, -Math.PI / 2, Math.PI, true);
+      ctx.lineTo(x0 + r, y0 + h); ctx.arc(x0, y0 + h, r, 0, -Math.PI / 2, true);
+      ctx.lineTo(x0, y0 + r); ctx.arc(x0, y0, r, Math.PI / 2, 0, true); ctx.closePath(); ctx.stroke(); break; }
+    case 'stars': {
+      const star = (cx, cy, R, fill) => { ctx.beginPath();
+        for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? R * 0.45 : R;
+          ctx.lineTo(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad); }
+        ctx.closePath(); ctx.lineWidth = Math.max(1, t * 0.6); fill ? ctx.fill() : ctx.stroke(); };
+      const s = Math.min(w, h);
+      const pts = [[.05,.08,.07,1],[.16,.2,.04,0],[.08,.45,.035,1],[.1,.85,.06,0],[.22,.93,.03,1],
+        [.93,.1,.06,0],[.82,.06,.035,1],[.95,.45,.04,1],[.9,.88,.07,1],[.78,.94,.035,0],[.5,.05,.025,1],[.5,.95,.025,1]];
+      pts.forEach(([px, py, pr, f]) => star(x0 + px * w, y0 + py * h, pr * s, f)); break; }
+  }
+  ctx.restore();
+}
+
+function wrapLines(ctx, text, maxW) {
+  const out = [];
+  for (const para of text.split('\n')) {
+    const words = para.split(' '); let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+function drawElement(ctx, el, L, redraw) {
+  const W = L.w * DPM, H = L.h * DPM;
+  const x = el.x * DPM, y = el.y * DPM;
+  ctx.save();
+  ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+  switch (el.type) {
+    case 'text': case 'date': {
+      ctx.font = fontStr(el); ctx.textBaseline = 'top';
+      const w = el.w * DPM, txt = el.type === 'date' ? (el.prefix || '') + todayStr() : expand(el.text);
+      const lines = el.wrap === false ? txt.split('\n') : wrapLines(ctx, txt, w);
+      const lh = el.size * DPM * (el.lineHeight || 1.2);
+      ctx.textAlign = el.align || 'left';
+      const ax = el.align === 'center' ? x + w / 2 : el.align === 'right' ? x + w : x;
+      const h = lines.length * lh;
+      if (el.invert) { ctx.fillRect(x - DPM * 0.6, y - DPM * 0.4, w + DPM * 1.2, h + DPM * 0.4); ctx.fillStyle = '#fff'; }
+      lines.forEach((ln, i) => {
+        ctx.fillText(ln, ax, y + i * lh + (lh - el.size * DPM) / 2);
+        if (el.underline) { const mw = ctx.measureText(ln).width, lx = el.align === 'center' ? ax - mw / 2 : el.align === 'right' ? ax - mw : ax;
+          ctx.fillRect(lx, y + i * lh + el.size * DPM * 1.05, mw, Math.max(1, el.size * DPM * 0.07)); }
+      });
+      el._bb = [x, y, w, Math.max(h, DPM)]; break; }
+    case 'qr': {
+      const s = el.size * DPM;
+      try {
+        const q = qrcode(0, el.ecc || 'M'); q.addData(unescape(encodeURIComponent(el.data || ' '))); q.make();
+        const n = q.getModuleCount(), cell = s / n;
+        for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
+          if (q.isDark(r, c)) ctx.fillRect(Math.floor(x + c * cell), Math.floor(y + r * cell), Math.ceil(cell), Math.ceil(cell));
+      } catch (e) { ctx.strokeRect(x, y, s, s); }
+      el._bb = [x, y, s, s]; break; }
+    case 'barcode': {
+      const w = el.w * DPM, h = el.h * DPM;
+      try {
+        const c = document.createElement('canvas');
+        JsBarcode(c, el.data || '0', { format: el.format || 'CODE128', displayValue: !!el.showText, margin: 0,
+          width: 2, height: 100, fontSize: 22, textMargin: 2 });
+        ctx.imageSmoothingEnabled = false; ctx.drawImage(c, x, y, w, h);
+      } catch (e) {
+        ctx.strokeRect(x, y, w, h); ctx.font = `${3 * DPM}px sans-serif`; ctx.fillText('Ogiltig kod', x + 4, y + h / 2);
+      }
+      el._bb = [x, y, w, h]; break; }
+    case 'image': {
+      const w = el.w * DPM, h = el.h * DPM;
+      const img = getImg(el.src, redraw);
+      if (img) ctx.drawImage(monoImage(el, img, Math.round(w), Math.round(h)), x, y);
+      else { ctx.setLineDash([6, 6]); ctx.strokeRect(x, y, w, h); }
+      el._bb = [x, y, w, h]; break; }
+    case 'frame': drawFrame(ctx, el, W, H); el._bb = [0, 0, W, H]; break;
+    case 'line': {
+      const t = Math.max(1, (el.thick ?? 0.3) * DPM);
+      if (el.vertical) { ctx.fillRect(x, y, t, el.w * DPM); el._bb = [x - 6, y, t + 12, el.w * DPM]; }
+      else { ctx.fillRect(x, y, el.w * DPM, t); el._bb = [x, y - 6, el.w * DPM, t + 12]; }
+      break; }
+  }
+  ctx.restore();
+}
+
+// Ritar etiketten till en svartvit canvas i skrivarens upplösning
+function renderMono(L, redraw) {
+  const W = Math.round(L.w * DPM), H = Math.round(L.h * DPM);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  for (const el of L.elements) drawElement(ctx, el, L, redraw);
+  const id = ctx.getImageData(0, 0, W, H), d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = (d[i] + d[i + 1] + d[i + 2]) / 3 < 140 ? 0 : 255;
+    d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+  }
+  ctx.putImageData(id, 0, 0);
+  return c;
+}
+
+/* ---------- Redigerare ---------- */
+const cv = $('#editCanvas'), cx = cv.getContext('2d');
+let rafPending = false;
+function redraw() {
+  if (rafPending) return; rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; drawEditor(); });
+}
+function drawEditor() {
+  if (!label) return;
+  const mono = renderMono(label, redraw);
+  const S = 3; // visningsskala
+  cv.width = mono.width * S; cv.height = mono.height * S;
+  const maxCss = Math.min($('#stage').clientWidth - 40, 560);
+  const cssW = Math.min(maxCss, label.w * 11);
+  cv.style.width = cssW + 'px'; cv.style.height = cssW * label.h / label.w + 'px';
+  cx.imageSmoothingEnabled = false;
+  cx.drawImage(mono, 0, 0, cv.width, cv.height);
+  const el = label.elements.find(e => e.id === selId);
+  if (el && el._bb) {
+    const [x, y, w, h] = el._bb.map(v => v * S);
+    cx.save(); cx.strokeStyle = '#e5533d'; cx.lineWidth = 3; cx.setLineDash([10, 6]);
+    cx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+    if (el.type !== 'frame') {
+      cx.setLineDash([]); cx.fillStyle = '#e5533d';
+      cx.beginPath(); cx.arc(x + w + 3, y + h + 3, 14, 0, Math.PI * 2); cx.fill();
+    }
+    cx.restore();
+  }
+  renderElist();
+}
+
+function canvasPt(ev) {
+  const r = cv.getBoundingClientRect();
+  return [(ev.clientX - r.left) / r.width * label.w * DPM, (ev.clientY - r.top) / r.height * label.h * DPM];
+}
+let drag = null;
+cv.addEventListener('pointerdown', ev => {
+  if (!label) return;
+  const [px, py] = canvasPt(ev);
+  const pxPerCss = label.w * DPM / cv.getBoundingClientRect().width;
+  const cur = label.elements.find(e => e.id === selId);
+  // storleksgreppet
+  if (cur && cur._bb && cur.type !== 'frame') {
+    const [x, y, w, h] = cur._bb;
+    if (Math.hypot(px - (x + w + 1), py - (y + h + 1)) < 22 * pxPerCss) {
+      drag = { mode: 'resize', el: cur, sx: px, sy: py, orig: clone(cur), bb: [...cur._bb] };
+      cv.setPointerCapture(ev.pointerId); return;
+    }
+  }
+  let hit = null;
+  for (let i = label.elements.length - 1; i >= 0; i--) {
+    const e = label.elements[i]; if (!e._bb) continue;
+    const [x, y, w, h] = e._bb;
+    if (e.type === 'frame') continue;
+    if (px >= x - 4 && px <= x + w + 4 && py >= y - 4 && py <= y + h + 4) { hit = e; break; }
+  }
+  select(hit ? hit.id : null);
+  if (hit) { drag = { mode: 'move', el: hit, sx: px, sy: py, ox: hit.x, oy: hit.y }; cv.setPointerCapture(ev.pointerId); }
+});
+cv.addEventListener('pointermove', ev => {
+  if (!drag) return;
+  const [px, py] = canvasPt(ev);
+  const dx = (px - drag.sx) / DPM, dy = (py - drag.sy) / DPM;
+  const snap = v => Math.round(v * 4) / 4;
+  const el = drag.el;
+  if (drag.mode === 'move') { el.x = snap(drag.ox + dx); el.y = snap(drag.oy + dy); }
+  else {
+    const o = drag.orig;
+    if (el.type === 'text' || el.type === 'date') {
+      const f = Math.max(0.2, (drag.bb[3] + dy * DPM) / drag.bb[3]);
+      el.size = Math.max(1.2, Math.round(o.size * f * 10) / 10);
+      el.w = Math.max(4, snap(o.w + dx));
+    } else if (el.type === 'qr') el.size = Math.max(5, snap(o.size + Math.max(dx, dy)));
+    else if (el.type === 'line') { if (el.vertical) el.w = Math.max(1, snap(o.w + dy)); else el.w = Math.max(1, snap(o.w + dx)); }
+    else { el.w = Math.max(2, snap(o.w + dx)); el.h = Math.max(2, snap(o.h + dy)); }
+  }
+  redraw();
+});
+const endDrag = () => { if (drag) { drag = null; renderProps(); autosave(); } };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+
+function select(id) { selId = id; renderProps(); redraw(); }
+
+const TYPE_NAMES = { text: 'Text', date: 'Datum', qr: 'QR-kod', barcode: 'Streckkod', image: 'Bild', frame: 'Ram', line: 'Linje' };
+function renderElist() {
+  const box = $('#elist'); box.innerHTML = '';
+  label.elements.forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (e.id === selId ? ' sel' : '');
+    const t = e.type === 'text' ? (e.text || '').split('\n')[0].slice(0, 14) : TYPE_NAMES[e.type];
+    b.textContent = t || TYPE_NAMES[e.type];
+    b.onclick = () => select(e.id);
+    box.appendChild(b);
+  });
+}
+
+/* ---------- Egenskapspanel ---------- */
+function field(lbl, input) { const w = document.createElement('div'); w.innerHTML = `<label class="f">${lbl}</label>`; w.appendChild(input); return w; }
+function mkInput(el, key, type = 'text', attrs = {}) {
+  let i;
+  if (type === 'textarea') i = document.createElement('textarea');
+  else if (type === 'select') { i = document.createElement('select');
+    for (const [v, t] of attrs.options) { const o = document.createElement('option'); o.value = v; o.textContent = t; i.appendChild(o); } }
+  else { i = document.createElement('input'); i.type = type; }
+  Object.entries(attrs).forEach(([k, v]) => { if (k !== 'options') i.setAttribute(k, v); });
+  if (type === 'checkbox') i.checked = !!el[key]; else i.value = el[key] ?? '';
+  i.addEventListener('input', () => {
+    el[key] = type === 'checkbox' ? i.checked : (type === 'number' || type === 'range') ? parseFloat(i.value) || 0 : i.value;
+    redraw(); autosave();
+  });
+  return i;
+}
+function check(el, key, lbl) {
+  const w = document.createElement('label'); w.className = 'check';
+  w.appendChild(mkInput(el, key, 'checkbox')); w.appendChild(document.createTextNode(' ' + lbl)); return w;
+}
+function renderProps() {
+  const el = label && label.elements.find(e => e.id === selId);
+  $('#props').hidden = !el;
+  if (!el) return;
+  $('#propsTitle').textContent = TYPE_NAMES[el.type];
+  const b = $('#propsBody'); b.innerHTML = '';
+  const two = () => { const d = document.createElement('div'); d.className = 'two'; b.appendChild(d); return d; };
+  const num = (k, attrs) => mkInput(el, k, 'number', Object.assign({ step: 0.5 }, attrs));
+  if (el.type === 'text' || el.type === 'date') {
+    if (el.type === 'text') { b.appendChild(field('Text (använd {datum} för dagens datum)', mkInput(el, 'text', 'textarea'))); }
+    else b.appendChild(field('Text före datum', mkInput(el, 'prefix')));
+    const g = two();
+    g.appendChild(field('Typsnitt', mkInput(el, 'font', 'select', { options: FONTS })));
+    g.appendChild(field('Justering', mkInput(el, 'align', 'select', { options: [['left', 'Vänster'], ['center', 'Centrerad'], ['right', 'Höger']] })));
+    g.appendChild(field('Storlek (mm)', num('size', { step: 0.1, min: 1 })));
+    g.appendChild(field('Bredd (mm)', num('w', { min: 2 })));
+    const r = document.createElement('div'); r.className = 'row';
+    r.append(check(el, 'bold', 'Fet'), check(el, 'italic', 'Kursiv'), check(el, 'underline', 'Understruken'), check(el, 'invert', 'Inverterad'));
+    b.appendChild(r);
+  } else if (el.type === 'qr') {
+    b.appendChild(field('Innehåll (text, länk, Wi-Fi…)', mkInput(el, 'data', 'textarea')));
+    const g = two(); g.appendChild(field('Storlek (mm)', num('size', { min: 5 })));
+    g.appendChild(field('Felkorrigering', mkInput(el, 'ecc', 'select', { options: [['L', 'Låg'], ['M', 'Medel'], ['Q', 'Hög'], ['H', 'Max']] })));
+  } else if (el.type === 'barcode') {
+    b.appendChild(field('Värde', mkInput(el, 'data')));
+    const g = two();
+    g.appendChild(field('Format', mkInput(el, 'format', 'select', { options: [['CODE128', 'Code 128'], ['EAN13', 'EAN-13'], ['EAN8', 'EAN-8'], ['UPC', 'UPC-A'], ['CODE39', 'Code 39'], ['ITF14', 'ITF-14']] })));
+    g.appendChild(document.createElement('div'));
+    g.appendChild(field('Bredd (mm)', num('w', { min: 5 }))); g.appendChild(field('Höjd (mm)', num('h', { min: 3 })));
+    b.appendChild(check(el, 'showText', 'Visa siffror under'));
+  } else if (el.type === 'image') {
+    const bt = document.createElement('button'); bt.className = 'btn small'; bt.textContent = 'Byt bild';
+    bt.onclick = () => pickImage(el); b.appendChild(bt);
+    const g = two(); g.appendChild(field('Bredd (mm)', num('w', { min: 2 }))); g.appendChild(field('Höjd (mm)', num('h', { min: 2 })));
+    b.appendChild(field('Ljusstyrka / tröskel', mkInput(el, 'threshold', 'range', { min: 20, max: 235 })));
+    const r = document.createElement('div'); r.className = 'row';
+    r.append(check(el, 'dither', 'Rastrering (foto)'), check(el, 'invert', 'Invertera')); b.appendChild(r);
+  } else if (el.type === 'frame') {
+    b.appendChild(field('Stil', mkInput(el, 'style', 'select', { options: [['simple', 'Enkel'], ['double', 'Dubbel'], ['rounded', 'Rundad'], ['dashed', 'Streckad'], ['dotted', 'Prickad'], ['oval', 'Oval'], ['ticket', 'Biljett'], ['stars', 'Stjärnor']] })));
+    const g = two(); g.appendChild(field('Marginal (mm)', num('margin', { step: 0.2, min: 0 }))); g.appendChild(field('Tjocklek (mm)', num('thick', { step: 0.1, min: 0.1 })));
+  } else if (el.type === 'line') {
+    const g = two(); g.appendChild(field('Längd (mm)', num('w', { min: 1 }))); g.appendChild(field('Tjocklek (mm)', num('thick', { step: 0.1, min: 0.1 })));
+    b.appendChild(check(el, 'vertical', 'Lodrät'));
+  }
+  if (el.type !== 'frame') {
+    const g = two(); g.appendChild(field('X (mm)', num('x', { step: 0.25 }))); g.appendChild(field('Y (mm)', num('y', { step: 0.25 })));
+    const c = document.createElement('button'); c.className = 'btn small'; c.textContent = 'Centrera vågrätt'; c.style.marginTop = '10px';
+    c.onclick = () => { const bb = el._bb; if (bb) { el.x = Math.round((label.w - bb[2] / DPM) / 2 * 4) / 4 + (el.x - bb[0] / DPM); renderProps(); redraw(); autosave(); } };
+    b.appendChild(c);
+  }
+}
+
+$('#delBtn').onclick = () => { label.elements = label.elements.filter(e => e.id !== selId); select(null); autosave(); };
+$('#dupBtn').onclick = () => {
+  const e = label.elements.find(e => e.id === selId); if (!e) return;
+  const n = clone(e); n.id = uid(); n.x += 2; n.y += 2; label.elements.push(n); select(n.id); autosave();
+};
+function move(d) {
+  const i = label.elements.findIndex(e => e.id === selId), j = i + d;
+  if (i < 0 || j < 0 || j >= label.elements.length) return;
+  [label.elements[i], label.elements[j]] = [label.elements[j], label.elements[i]]; redraw(); autosave();
+}
+$('#upBtn').onclick = () => move(1); $('#downBtn').onclick = () => move(-1);
+
+function pickImage(target) {
+  const fi = $('#fileIn');
+  fi.onchange = () => {
+    const f = fi.files[0]; fi.value = ''; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      // skala ner stora bilder så de får plats i lagringen
+      const img = new Image();
+      img.onload = () => {
+        const max = 800, r = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = img.width * r; c.height = img.height * r;
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        const src = c.toDataURL('image/jpeg', 0.85);
+        let el = target;
+        if (!el) {
+          const asp = c.height / c.width, w = Math.min(label.w - 4, (label.h - 4) / asp);
+          el = T({ type: 'image', x: (label.w - w) / 2, y: (label.h - w * asp) / 2, w, h: w * asp, threshold: 128, dither: true });
+          label.elements.push(el);
+        }
+        el.src = src; select(el.id); autosave();
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  };
+  fi.click();
+}
+
+$$('[data-add]').forEach(b => b.onclick = () => {
+  const t = b.dataset.add, L = label; let el;
+  if (t === 'text') el = T({ type: 'text', x: 2, y: L.h / 2 - 3, w: L.w - 4, text: 'Text', font: 'Roboto', size: 5, bold: true, align: 'center' });
+  if (t === 'date') el = T({ type: 'date', x: 2, y: L.h - 7, w: L.w - 4, prefix: 'Datum: ', font: 'Roboto', size: 3.5, align: 'center' });
+  if (t === 'qr') { const s = Math.min(L.w, L.h) - 6; el = T({ type: 'qr', x: (L.w - s) / 2, y: 3, size: s, data: 'https://furiz.github.io', ecc: 'M' }); }
+  if (t === 'barcode') el = T({ type: 'barcode', x: 4, y: L.h / 2 - 5, w: L.w - 8, h: 10, data: '123456789', format: 'CODE128', showText: true });
+  if (t === 'frame') { label.elements = label.elements.filter(e => e.type !== 'frame'); el = T({ type: 'frame', style: 'rounded', margin: 1.2, thick: 0.4 }); label.elements.unshift(el); select(el.id); autosave(); return; }
+  if (t === 'line') el = T({ type: 'line', x: 4, y: L.h / 2, w: L.w - 8, thick: 0.3 });
+  if (t === 'image') return pickImage(null);
+  label.elements.push(el); select(el.id); autosave();
+});
+
+/* ---------- Etikettens storlek / namn ---------- */
+function fillSizeSel() {
+  const s = $('#sizeSel'); s.innerHTML = '';
+  const list = SIZES.slice();
+  if (label && !list.some(([w, h]) => w === label.w && h === label.h)) list.push([label.w, label.h]);
+  list.forEach(([w, h]) => { const o = document.createElement('option'); o.value = w + 'x' + h; o.textContent = `${w}×${h} mm`; s.appendChild(o); });
+  const o = document.createElement('option'); o.value = 'custom'; o.textContent = 'Egen storlek…'; s.appendChild(o);
+  if (label) s.value = label.w + 'x' + label.h;
+}
+$('#sizeSel').onchange = e => {
+  let v = e.target.value;
+  if (v === 'custom') {
+    const r = prompt('Storlek i mm (bredd×höjd), t.ex. 45x25', `${label.w}x${label.h}`);
+    if (!r) { e.target.value = label.w + 'x' + label.h; return; }
+    v = r.toLowerCase().replace('×', 'x');
+  }
+  const [w, h] = v.split('x').map(Number);
+  if (w > 0 && h > 0) { label.w = w; label.h = h; }
+  fillSizeSel(); redraw(); autosave();
+};
+$('#labelName').oninput = e => { label.name = e.target.value; autosave(); };
+
+function openLabel(L) {
+  label = clone(L); label.id = label.id || uid();
+  label.elements.forEach(e => e.id = e.id || uid());
+  selId = null; $('#labelName').value = label.name || '';
+  fillSizeSel(); renderProps(); show('edit'); redraw(); autosave();
+}
+function autosave() { if (label) store.set('current', label); }
+
+/* ---------- Galleri ---------- */
+function thumb(L) {
+  const c = renderMono(L, () => refreshGalleries());
+  return c;
+}
+function tplCard(L, onOpen, onDel) {
+  const b = document.createElement('div'); b.className = 'tpl'; b.tabIndex = 0;
+  b.appendChild(thumb(L));
+  const m = document.createElement('div'); m.className = 'meta';
+  m.innerHTML = `<div class="name"></div><div class="size">${L.w}×${L.h} mm</div>`;
+  m.querySelector('.name').textContent = L.name;
+  b.appendChild(m); b.onclick = onOpen;
+  if (onDel) { const d = document.createElement('button'); d.className = 'del'; d.textContent = '×'; d.title = 'Ta bort';
+    d.onclick = ev => { ev.stopPropagation(); onDel(); }; b.appendChild(d); }
+  return b;
+}
+let catSel = 'Alla', sizeSel = 'Alla';
+function refreshGalleries() {
+  // inbyggda mallar
+  const cats = ['Alla', ...new Set(BUILTIN.map(t => t.cat))];
+  const sizes = ['Alla', ...new Set(BUILTIN.map(t => `${t.w}×${t.h}`))];
+  const chips = (box, arr, cur, set) => { box.innerHTML = ''; arr.forEach(a => { const c = document.createElement('button');
+    c.className = 'chip' + (a === cur ? ' sel' : ''); c.textContent = a === 'Alla' && box.id === 'sizeChips' ? 'Alla storlekar' : a;
+    c.onclick = () => { set(a); refreshGalleries(); }; box.appendChild(c); }); };
+  chips($('#catChips'), cats, catSel, v => catSel = v);
+  chips($('#sizeChips'), sizes, sizeSel, v => sizeSel = v);
+  const g = $('#tplGrid'); g.innerHTML = '';
+  BUILTIN.filter(t => (catSel === 'Alla' || t.cat === catSel) && (sizeSel === 'Alla' || `${t.w}×${t.h}` === sizeSel))
+    .forEach(t => g.appendChild(tplCard(t, () => openLabel(Object.assign(clone(t), { id: uid() })))));
+  // mina mallar
+  const mine = store.get('mine', []);
+  const mg = $('#myGrid'); mg.innerHTML = ''; $('#myEmpty').hidden = mine.length > 0;
+  mine.forEach((t, i) => mg.appendChild(tplCard(t, () => openLabel(t), () => {
+    if (confirm(`Ta bort "${t.name}"?`)) { mine.splice(i, 1); store.set('mine', mine); refreshGalleries(); } })));
+  const hist = store.get('history', []);
+  const hg = $('#histGrid'); hg.innerHTML = ''; $('#histEmpty').hidden = hist.length > 0;
+  hist.forEach(t => hg.appendChild(tplCard(t, () => openLabel(t))));
+}
+$('#saveBtn').onclick = () => {
+  const name = prompt('Namn på mallen', label.name || 'Min etikett'); if (!name) return;
+  label.name = name; $('#labelName').value = name;
+  const mine = store.get('mine', []);
+  const i = mine.findIndex(t => t.id === label.id);
+  const copy = clone(label); copy.elements.forEach(e => delete e._bb);
+  if (i >= 0) mine[i] = copy; else mine.unshift(copy);
+  store.set('mine', mine); toast('Mallen sparad'); refreshGalleries();
+};
+$('#pngBtn').onclick = () => {
+  const a = document.createElement('a'); a.download = (label.name || 'etikett') + '.png';
+  a.href = renderMono(label).toDataURL('image/png'); a.click();
+};
+$('#newBtn').onclick = () => openLabel(newLabel(40, 30));
+
+/* ---------- Navigering ---------- */
+function show(v) {
+  $$('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
+  $$('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  if (v === 'edit') { if (!label) openLabel(newLabel()); else redraw(); }
+  if (v === 'home' || v === 'templates') refreshGalleries();
+  window.scrollTo(0, 0);
+}
+$$('.tabbar button').forEach(b => b.onclick = () => show(b.dataset.view));
+$('#printerBtn').onclick = () => show('printer');
+window.addEventListener('resize', redraw);
+
+/* ---------- Bluetooth / M110 ---------- */
+// Phomemo-skrivare: tjänst 0xFF00, skriv 0xFF02, notiser 0xFF03
+const SERVICES = [0xff00, 0xfee7, 0x18f0, 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '49535343-fe7d-4ae5-8fa9-9fafd205e455'];
+const bt = { device: null, write: null, notify: null };
+
+async function connect() {
+  if (!navigator.bluetooth) { toast('Web Bluetooth saknas – se informationen överst'); return false; }
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: 'M110' }, { namePrefix: 'M1' }, { namePrefix: 'M2' }, { namePrefix: 'Q' }, { services: [0xff00] }],
+      optionalServices: SERVICES
+    });
+    log('Vald enhet: ' + device.name);
+    device.addEventListener('gattserverdisconnected', () => { log('Frånkopplad'); bt.write = null; updateUi(); });
+    const server = await device.gatt.connect();
+    let write = null, notify = null, svcName = '';
+    for (const s of SERVICES) {
+      let svc; try { svc = await server.getPrimaryService(s); } catch { continue; }
+      const chars = await svc.getCharacteristics();
+      for (const c of chars) {
+        if (!write && (c.properties.writeWithoutResponse || c.properties.write)) write = c;
+        if (!notify && (c.properties.notify || c.properties.indicate)) notify = c;
+      }
+      if (write) { svcName = svc.uuid.slice(4, 8); break; }
+    }
+    if (!write) throw new Error('Hittade ingen skrivbar karakteristik');
+    if (notify) {
+      try { await notify.startNotifications();
+        notify.addEventListener('characteristicvaluechanged', e => {
+          const v = new Uint8Array(e.target.value.buffer); log('← ' + [...v].map(b => b.toString(16).padStart(2, '0')).join(' ')); });
+      } catch (e) { log('Notiser: ' + e.message); }
+    }
+    Object.assign(bt, { device, write, notify, svc: svcName });
+    log(`Ansluten. Tjänst ${svcName}, karakteristik ${write.uuid.slice(4, 8)}`);
+    updateUi(); toast('Ansluten till ' + device.name);
+    return true;
+  } catch (e) {
+    if (e.name !== 'NotFoundError') { log('Fel: ' + e.message); toast('Kunde inte ansluta: ' + e.message); }
+    return false;
+  }
+}
+function updateUi() {
+  const on = !!(bt.write && bt.device?.gatt.connected);
+  $('#dot').classList.toggle('on', on);
+  $('#printerName').textContent = on ? bt.device.name : 'Anslut M110';
+  $('#pName').textContent = bt.device?.name || '–';
+  $('#pStatus').textContent = on ? 'Ansluten' : 'Inte ansluten';
+  $('#pSvc').textContent = on ? '0x' + bt.svc : '–';
+  $('#disconnectBtn').disabled = !on;
+}
+$('#connectBtn').onclick = connect;
+$('#disconnectBtn').onclick = () => { bt.device?.gatt.disconnect(); };
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function send(bytes) {
+  const chunk = Math.max(20, +$('#chunk').value || 128), delay = Math.max(0, +$('#delay').value || 0);
+  const noResp = bt.write.properties.writeWithoutResponse;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    const part = bytes.slice(i, i + chunk);
+    if (noResp) await bt.write.writeValueWithoutResponse(part);
+    else await bt.write.writeValueWithResponse(part);
+    if (delay) await sleep(delay);
+  }
+}
+
+// Bygger rasterdata: 1 bit/punkt, MSB först, 1 = svart
+function buildRaster(L) {
+  let mono = renderMono(L);
+  if ($('#rot180').checked) {
+    const c = document.createElement('canvas'); c.width = mono.width; c.height = mono.height;
+    const x = c.getContext('2d'); x.translate(c.width, c.height); x.rotate(Math.PI); x.drawImage(mono, 0, 0); mono = c;
+  }
+  const maxDots = +$('#maxDots').value || 384, off = +$('#offsetX').value || 0;
+  const srcW = mono.width, H = mono.height;
+  const W = Math.min(Math.ceil(srcW / 8) * 8, Math.floor(maxDots / 8) * 8);
+  const start = Math.floor((srcW - W) / 2) - off; // centrera om bilden är bredare än huvudet
+  const d = mono.getContext('2d').getImageData(0, 0, srcW, H).data;
+  const bpl = W / 8, out = new Uint8Array(bpl * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const sx = x + start; if (sx < 0 || sx >= srcW) continue;
+    if (d[(y * srcW + sx) * 4] < 128) out[y * bpl + (x >> 3)] |= 0x80 >> (x & 7);
+  }
+  return { bpl, H, data: out };
+}
+function buildJob(L) {
+  const speed = +$('#speed').value, dens = +$('#density').value, media = +$('#media').value;
+  const r = buildRaster(L);
+  const head = [0x1b, 0x4e, 0x0d, speed, 0x1b, 0x4e, 0x04, dens, 0x1f, 0x11, media];
+  const img = [0x1d, 0x76, 0x30, 0x00, r.bpl & 0xff, r.bpl >> 8, r.H & 0xff, r.H >> 8];
+  const foot = [0x1f, 0xf0, 0x05, 0x00, 0x1f, 0xf0, 0x03, 0x00];
+  const job = new Uint8Array(head.length + img.length + r.data.length + foot.length);
+  job.set(head, 0); job.set(img, head.length); job.set(r.data, head.length + img.length);
+  job.set(foot, head.length + img.length + r.data.length);
+  return job;
+}
+
+let printing = false;
+async function printLabel(L) {
+  if (printing) return;
+  if (!bt.write || !bt.device?.gatt.connected) { if (!(await connect())) return; }
+  printing = true; $('#printBtn').disabled = true;
+  try {
+    await loadFonts();
+    const copies = Math.max(1, Math.min(99, +$('#copies').value || 1));
+    const job = buildJob(L);
+    for (let i = 0; i < copies; i++) {
+      $('#printBtn').textContent = `Skriver ${i + 1}/${copies}…`;
+      log(`→ jobb ${job.length} byte (${i + 1}/${copies})`);
+      await send(job);
+      if (i < copies - 1) await sleep(600);
+    }
+    toast('Skickat till skrivaren');
+    if (L === label) {
+      const hist = store.get('history', []).filter(h => h.id !== label.id);
+      const c = clone(label); c.elements.forEach(e => delete e._bb); hist.unshift(c);
+      store.set('history', hist.slice(0, 12));
+    }
+  } catch (e) { log('Utskriftsfel: ' + e.message); toast('Utskriftsfel: ' + e.message); }
+  finally { printing = false; $('#printBtn').disabled = false; $('#printBtn').textContent = '🖨 Skriv ut'; }
+}
+$('#printBtn').onclick = () => printLabel(label);
+$('#testBtn').onclick = () => printLabel({ w: 40, h: 30, elements: [
+  T({ type: 'frame', style: 'rounded' }),
+  T({ type: 'text', x: 2, y: 5, w: 36, text: 'Testutskrift', font: 'Roboto', size: 5, bold: true, align: 'center' }),
+  T({ type: 'text', x: 2, y: 14, w: 36, text: 'M110 ✓\n{datum}', font: 'Roboto', size: 3.5, align: 'center' })] });
+
+/* ---------- Inställningar ---------- */
+const SETTINGS = ['copies', 'media', 'density', 'speed', 'rot180', 'maxDots', 'offsetX', 'chunk', 'delay'];
+function loadSettings() {
+  const s = store.get('settings', {});
+  SETTINGS.forEach(k => { const i = $('#' + k); if (s[k] === undefined) return; if (i.type === 'checkbox') i.checked = s[k]; else i.value = s[k]; });
+}
+function saveSettings() {
+  const s = {}; SETTINGS.forEach(k => { const i = $('#' + k); s[k] = i.type === 'checkbox' ? i.checked : i.value; });
+  store.set('settings', s);
+  $('#densV').textContent = $('#density').value; $('#speedV').textContent = $('#speed').value;
+}
+SETTINGS.forEach(k => $('#' + k).addEventListener('input', saveSettings));
+
+/* ---------- Start ---------- */
+(async function init() {
+  if (!navigator.bluetooth) $('#noBt').hidden = false;
+  loadSettings(); saveSettings();
+  label = store.get('current', null);
+  await loadFonts();
+  refreshGalleries();
+  if (label) { $('#labelName').value = label.name || ''; fillSizeSel(); }
+  updateUi();
+})();
+</script>
+</body>
+</html>

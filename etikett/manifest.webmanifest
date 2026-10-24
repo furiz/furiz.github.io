@@ -1,0 +1,9 @@
+{
+  "name": "Etikett – M110",
+  "short_name": "Etikett",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f4f5",
+  "theme_color": "#e5533d",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

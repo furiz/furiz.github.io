@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Secret Santa 🎅</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lobster&family=Inter:wght@400;700;900&display=swap&subset=latin-ext" rel="stylesheet">
+<style>
+  :root { --gold: #ffd34d; --red: #e3263a; --green: #18a05a; --night: #050b1a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--night); color: #fff; font-family: Inter, system-ui, sans-serif; }
+  body { -webkit-tap-highlight-color: transparent; }
+
+  #sky { position: fixed; inset: 0; background:
+      radial-gradient(ellipse at 50% 120%, #3a0d1c 0%, transparent 60%),
+      radial-gradient(ellipse at 50% -20%, #12305a 0%, transparent 65%), var(--night); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #fx { z-index: 30; }
+
+  /* Strålkastare */
+  .beam { position: fixed; bottom: -10vh; width: 40vw; height: 140vh; transform-origin: 50% 100%; opacity: 0; transition: opacity 1s;
+    background: linear-gradient(to top, rgba(255,240,190,.35), rgba(255,240,190,0) 85%);
+    clip-path: polygon(45% 100%, 55% 100%, 100% 0, 0 0); filter: blur(6px); mix-blend-mode: screen; z-index: 2; }
+  .beam.l { left: -5vw; animation: swingL 4s ease-in-out infinite alternate; }
+  .beam.r { right: -5vw; animation: swingR 4.6s ease-in-out infinite alternate; }
+  .beam.c { left: 30vw; background: linear-gradient(to top, rgba(255,90,110,.3), transparent 80%); animation: swingL 3.3s ease-in-out infinite alternate-reverse; }
+  .live .beam { opacity: 1; }
+  @keyframes swingL { from { transform: rotate(-35deg); } to { transform: rotate(25deg); } }
+  @keyframes swingR { from { transform: rotate(35deg); } to { transform: rotate(-25deg); } }
+
+  /* Ljusslinga */
+  #lights { position: fixed; top: 0; left: 0; right: 0; height: 40px; display: flex; justify-content: space-around; z-index: 5; pointer-events: none; }
+  #lights::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 18px; border-bottom: 2px solid #1d2b1d; border-radius: 0 0 50% 50%; }
+  #lights i { width: 12px; height: 18px; margin-top: 16px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; animation: blink 1.2s infinite; }
+  #lights i:nth-child(4n+1) { background: #ff3b4e; color: #ff3b4e; }
+  #lights i:nth-child(4n+2) { background: #3bff7a; color: #3bff7a; animation-delay: .3s; }
+  #lights i:nth-child(4n+3) { background: #ffd34d; color: #ffd34d; animation-delay: .6s; }
+  #lights i:nth-child(4n+4) { background: #4ab8ff; color: #4ab8ff; animation-delay: .9s; }
+  @keyframes blink { 0%, 100% { opacity: 1; box-shadow: 0 0 12px 3px currentColor; } 50% { opacity: .35; box-shadow: none; } }
+
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 16px; z-index: 10; }
+  [hidden] { display: none !important; }
+
+  /* Startskärm */
+  #landing h1 { font-family: Lobster, cursive; font-weight: 400; font-size: clamp(2.6rem, 11vw, 5.5rem); margin: 0; line-height: 1; color: var(--gold);
+    text-shadow: 0 4px 0 #8c1424, 0 0 40px rgba(255,211,77,.4); }
+  #landing .stamp { font-family: Anton, Impact, sans-serif; letter-spacing: .12em; color: var(--red); border: 4px solid var(--red); padding: 4px 14px; border-radius: 6px;
+    transform: rotate(-8deg); margin: 18px 0 26px; font-size: clamp(1rem, 4.5vw, 1.5rem); opacity: .9; }
+  #landing .for { color: #c7d4ea; margin: 0; }
+  #landing .who { font-family: Anton, Impact, sans-serif; font-size: clamp(2rem, 9vw, 3.6rem); letter-spacing: .03em; margin: 4px 0 28px; }
+  #openBtn { font: 900 clamp(1.2rem, 5vw, 1.6rem) Inter, sans-serif; color: #fff; border: 0; cursor: pointer; padding: 18px 40px; border-radius: 999px;
+    background: linear-gradient(135deg, #ff3d52, #b0102a); box-shadow: 0 8px 0 #5c0715, 0 0 0 0 rgba(255,61,82,.7); animation: pulse 1.6s infinite; }
+  #openBtn:active { transform: translateY(4px); box-shadow: 0 4px 0 #5c0715; }
+  @keyframes pulse { 0% { box-shadow: 0 8px 0 #5c0715, 0 0 0 0 rgba(255,61,82,.6); } 70% { box-shadow: 0 8px 0 #5c0715, 0 0 0 26px rgba(255,61,82,0); } 100% { box-shadow: 0 8px 0 #5c0715, 0 0 0 0 rgba(255,61,82,0); } }
+  #landing .snd { color: #9fb3cc; margin-top: 22px; font-size: .95rem; }
+  #langs { position: fixed; top: 52px; right: 14px; z-index: 12; display: flex; gap: 6px; }
+  #langs button { font: 700 .85rem Inter, sans-serif; color: #fff; background: #0008; border: 1px solid #ffffff30; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  #langs button.on { background: var(--gold); color: #3a1a00; border-color: var(--gold); }
+  .live #langs { display: none; }
+  #landing .notyou { color: #7f93b0; font-size: .85rem; margin-top: 10px; }
+
+  /* Radiobadge */
+  #radio { position: fixed; top: 46px; left: 50%; transform: translateX(-50%) translateY(-150px); z-index: 20; display: flex; align-items: center; gap: 12px;
+    background: #111a; backdrop-filter: blur(6px); border: 2px solid #ffffff22; border-radius: 14px; padding: 8px 16px; transition: transform .7s cubic-bezier(.2,1.6,.4,1); white-space: nowrap; }
+  .live #radio { transform: translateX(-50%) translateY(0); }
+  #radio .onair { font-family: Anton, Impact, sans-serif; letter-spacing: .1em; background: #ff1f3d; color: #fff; padding: 2px 10px; border-radius: 6px; animation: onair 1s infinite; }
+  @keyframes onair { 50% { background: #5a0b16; color: #ff8a9a; } }
+  #radio .st { font-family: Anton, Impact, sans-serif; letter-spacing: .06em; font-size: clamp(.8rem, 3.4vw, 1.1rem); }
+  #radio .eq { display: flex; gap: 3px; align-items: flex-end; height: 22px; }
+  #radio .eq b { width: 4px; background: var(--gold); animation: eq .5s infinite alternate; }
+  #radio .eq b:nth-child(2) { animation-delay: .15s; } #radio .eq b:nth-child(3) { animation-delay: .3s; } #radio .eq b:nth-child(4) { animation-delay: .05s; }
+  @keyframes eq { from { height: 4px; } to { height: 22px; } }
+
+  /* Textremsor */
+  #caption { position: fixed; left: 0; right: 0; bottom: 10vh; z-index: 25; text-align: center; padding: 0 16px; pointer-events: none;
+    font-family: Anton, Impact, sans-serif; font-size: clamp(1.5rem, 6.5vw, 3.4rem); line-height: 1.12; text-transform: uppercase; letter-spacing: .01em;
+    text-shadow: 0 4px 0 #000, 0 0 24px rgba(0,0,0,.8); }
+  #caption .w { display: inline-block; opacity: 0; transform: translateY(40px) scale(.6) rotate(-6deg); animation: wordIn .45s cubic-bezier(.2,1.8,.4,1) forwards; }
+  #caption .hl { color: var(--gold); }
+  @keyframes wordIn { to { opacity: 1; transform: none; } }
+  #caption.out { animation: capOut .3s forwards; }
+  @keyframes capOut { to { opacity: 0; transform: scale(1.15); filter: blur(6px); } }
+
+  /* Paket */
+  #giftWrap { position: fixed; left: 50%; top: 46%; transform: translate(-50%, -50%) scale(0); z-index: 15; transition: transform .8s cubic-bezier(.2,1.6,.4,1); }
+  #giftWrap.in { transform: translate(-50%, -50%) scale(1); }
+  #gift { position: relative; width: min(46vw, 230px); height: min(40vw, 200px); }
+  #gift.shake1 { animation: shake .35s infinite; } #gift.shake2 { animation: shake .16s infinite; } #gift.shake3 { animation: shake .07s infinite; }
+  @keyframes shake { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-5deg) translateY(-3px) } 75% { transform: rotate(5deg) translateY(2px) } }
+  .box { position: absolute; left: 6%; right: 6%; bottom: 0; height: 74%; border-radius: 6px;
+    background: linear-gradient(90deg, transparent 43%, var(--gold) 43%, #ffe9a6 50%, var(--gold) 57%, transparent 57%), linear-gradient(160deg, #ff3b4e, #9c0c22); box-shadow: inset -14px -10px 0 rgba(0,0,0,.18), 0 20px 40px rgba(0,0,0,.6); }
+  .lid { position: absolute; left: 0; right: 0; top: 4%; height: 26%; border-radius: 6px; z-index: 2; transition: transform 1s cubic-bezier(.2,.8,.3,1), opacity 1s;
+    background: linear-gradient(90deg, transparent 43%, var(--gold) 43%, #ffe9a6 50%, var(--gold) 57%, transparent 57%), linear-gradient(160deg, #ff5566, #b5142c); box-shadow: inset 0 -8px 0 rgba(0,0,0,.2); }
+  .bow { position: absolute; left: 50%; top: -42%; width: 46%; height: 70%; transform: translateX(-50%); }
+  .bow::before, .bow::after { content: ""; position: absolute; top: 10%; width: 50%; height: 80%; border: 10px solid var(--gold); border-radius: 50% 50% 10% 50%; }
+  .bow::before { left: 0; transform: rotate(-20deg); } .bow::after { right: 0; transform: scaleX(-1) rotate(-20deg); }
+  #gift.open .lid { transform: translate(40vw, -70vh) rotate(160deg); opacity: 0; }
+  #gift.open .box { animation: boxGone .6s .1s forwards; }
+  @keyframes boxGone { to { transform: scale(1.6); opacity: 0; } }
+  #glow { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%,-50%); background: #fff8d0; box-shadow: 0 0 60px 40px rgba(255,220,120,.6); opacity: 0; transition: opacity 1.5s; }
+  #gift.shake2 ~ #glow, #gift.shake3 ~ #glow { opacity: 1; }
+
+  /* Nedräkning */
+  #count { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 26; pointer-events: none;
+    font-family: Anton, Impact, sans-serif; font-size: 40vmin; color: #fff; text-shadow: 0 0 40px var(--red), 0 10px 0 #000; }
+  #count span { animation: countPop .9s ease-out forwards; }
+  @keyframes countPop { 0% { transform: scale(2.6); opacity: 0; } 20% { transform: scale(1); opacity: 1; } 100% { transform: scale(.7); opacity: 0; } }
+
+  #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 40; }
+  #flash.go { animation: flash 1s ease-out; }
+  @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+  body.boom #stage { animation: bigshake .6s; }
+  @keyframes bigshake { 10%,50%,90% { transform: translate(-12px, 6px); } 30%,70% { transform: translate(12px, -8px); } }
+
+  /* Avslöjande */
+  #reveal { z-index: 28; pointer-events: none; }
+  #reveal .pre { font-family: Anton, Impact, sans-serif; text-transform: uppercase; letter-spacing: .08em; font-size: clamp(1rem, 4.5vw, 1.7rem); color: #ffe7a8; opacity: 0; animation: fadeUp .8s .2s forwards; }
+  #name { font-family: Lobster, cursive; font-size: clamp(2.8rem, 15vw, 10rem); line-height: 1.05; margin: 6px 0 0; word-break: break-word; }
+  #name .l { display: inline-block; opacity: 0; transform: translateY(-120px) scale(3) rotate(-20deg);
+    background: linear-gradient(100deg, #fff6c9 0%, #ffd34d 30%, #fff 45%, #ffbf1f 60%, #fff3b0 100%); background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 6px 0 #7a1020) drop-shadow(0 0 26px rgba(255,200,60,.7));
+    animation: letterIn .7s cubic-bezier(.2,1.6,.4,1) forwards, shimmer 2.5s linear infinite; }
+  @keyframes letterIn { to { opacity: 1; transform: none; } }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -200% 0; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+  /* Slutkort */
+  #final { z-index: 29; justify-content: flex-end; padding-bottom: max(28px, env(safe-area-inset-bottom)); pointer-events: none; }
+  #final .card { pointer-events: auto; background: rgba(10,20,40,.72); backdrop-filter: blur(8px); border: 1px solid #ffffff26; border-radius: 18px; padding: 16px 20px; max-width: 520px; width: 100%;
+    opacity: 0; animation: fadeUp .8s forwards; }
+  #final .msg { color: #ffe7a8; margin: 0 0 12px; font-weight: 700; }
+  #final .msg:empty { display: none; }
+  #final .shh { margin: 0 0 14px; color: #c7d4ea; }
+  #final button { font: 700 1rem Inter, sans-serif; border-radius: 999px; padding: 10px 20px; border: 1px solid #ffffff40; background: transparent; color: #fff; cursor: pointer; }
+
+  #muteBtn { position: fixed; right: 14px; bottom: 14px; z-index: 50; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #ffffff30; background: #0008; color: #fff; font-size: 20px; cursor: pointer; }
+  #skipBtn { position: fixed; left: 14px; bottom: 14px; z-index: 50; height: 44px; border-radius: 999px; border: 1px solid #ffffff30; background: #0008; color: #fffc; padding: 0 16px; font: 600 .9rem Inter, sans-serif; cursor: pointer; }
+
+  #err { z-index: 60; }
+  #err h1 { font-family: Lobster, cursive; font-weight: 400; color: var(--gold); font-size: 3rem; margin: 0 0 10px; }
+
+  @media (prefers-reduced-motion: reduce) { #gift[class*=shake] { animation-duration: 1s; } body.boom #stage { animation: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="sky"></div>
+  <div class="beam l"></div><div class="beam c"></div><div class="beam r"></div>
+  <canvas id="snow"></canvas>
+  <div id="lights"></div>
+
+  <div id="langs" hidden><button data-l="pl">🇵🇱 PL</button><button data-l="en">🇬🇧 EN</button></div>
+  <div id="radio"><span class="onair">ON AIR</span><span class="st" id="station"></span><span class="eq"><b></b><b></b><b></b><b></b></span></div>
+
+  <section class="screen" id="landing">
+    <h1>Secret Santa</h1>
+    <div class="stamp" id="tStamp"></div>
+    <p class="for" id="tFor"></p>
+    <div class="who" id="tWho"></div>
+    <button id="openBtn"></button>
+    <p class="snd" id="tSound"></p>
+    <p class="notyou" id="tNotYou"></p>
+  </section>
+
+  <div id="giftWrap"><div id="gift"><div class="lid"><div class="bow"></div></div><div class="box"></div></div><div id="glow"></div></div>
+  <div id="count"></div>
+
+  <section class="screen" id="reveal" hidden>
+    <div class="pre" id="tYouAre"></div>
+    <div id="name"></div>
+  </section>
+
+  <section class="screen" id="final" hidden>
+    <div class="card">
+      <p class="msg" id="tMsg"></p>
+      <p class="shh" id="tShh"></p>
+      <button id="replayBtn"></button>
+    </div>
+  </section>
+
+  <section class="screen" id="err" hidden>
+    <h1>Ho ho… oj!</h1>
+    <p>Ten link jest uszkodzony. / Länken verkar vara trasig. / This link seems broken.</p>
+  </section>
+</div>
+<div id="caption"></div>
+<div id="flash"></div>
+<canvas id="fx"></canvas>
+<button id="muteBtn" hidden aria-label="Ljud">🔊</button>
+<button id="skipBtn" hidden></button>
+
+<script src="santa.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // ---------- Texter ----------
+  const TXT = {
+    pl: {
+      speech: 'pl-PL', station: 'RADIO BIEGUN PÓŁNOCNY 104,7 FM', stamp: 'ŚCIŚLE TAJNE', forTxt: 'Ta wiadomość jest tylko dla:', open: '🎁 Otwórz',
+      sound: '🔊 Włącz dźwięk!', notYou: 'Nie jesteś {g}? Zamknij tę stronę, bo zepsujesz niespodziankę! 🎅', youAre: 'Jesteś Tajnym Mikołajem dla:',
+      shh: '🤫 Psst… nikomu nie mów! Wesołych Świąt!', replay: '↻ Jeszcze raz', skip: 'Pomiń ⏭',
+      lines: [
+        'Uwaga, uwaga! Przerywamy program! Wiadomość specjalna prosto z Bieguna Północnego!',
+        'Tylko w tym roku! Tylko w tym radiu! Tylko dla ciebie, {g}!',
+        'Elfy liczyły! Renifery głosowały! A sam Święty Mikołaj podpisał decyzję!',
+        'Werble, proszę!',
+        'Osoba, którą obdarujesz w tym roku, to…',
+        '{r}!',
+        'Gratulacje! Ale pamiętaj: to ściśle tajne! Wesołych Świąt!'
+      ]
+    },
+    sv: {
+      speech: 'sv-SE', station: 'RADIO NORDPOLEN 104,7 FM', stamp: 'TOPPHEMLIGT', forTxt: 'Det här meddelandet är bara till:', open: '🎁 Öppna',
+      sound: '🔊 Sätt på ljudet!', notYou: 'Är du inte {g}? Stäng sidan, annars förstör du överraskningen! 🎅', youAre: 'Du är Secret Santa till:',
+      shh: '🤫 Psst… säg inget till någon! God jul!', replay: '↻ Igen', skip: 'Hoppa över ⏭',
+      lines: [
+        'Hallå, hallå! Vi avbryter sändningen för ett specialmeddelande direkt från Nordpolen!',
+        'Bara i år! Bara här! Bara för dig, {g}!',
+        'Nissarna har räknat! Renarna har röstat! Och tomten själv har skrivit under!',
+        'Trumvirvel, tack!',
+        'Personen du ska vara hemlig tomte åt i år är…',
+        '{r}!',
+        'Grattis! Men kom ihåg: det här är topphemligt! God jul!'
+      ]
+    },
+    en: {
+      speech: 'en-US', station: 'RADIO NORTH POLE 104.7 FM', stamp: 'TOP SECRET', forTxt: 'This message is only for:', open: '🎁 Open',
+      sound: '🔊 Turn your sound on!', notYou: 'Not {g}? Close this page or you will spoil the surprise! 🎅', youAre: 'You are the Secret Santa for:',
+      shh: '🤫 Psst… don’t tell anyone! Merry Christmas!', replay: '↻ Again', skip: 'Skip ⏭',
+      lines: [
+        'Attention, attention! We interrupt this program for a special announcement, live from the North Pole!',
+        'This year only! This station only! Exclusively for you, {g}!',
+        'The elves have counted! The reindeer have voted! And Santa himself has signed the decision!',
+        'Drumroll, please!',
+        'The person you will be Secret Santa for this year is…',
+        '{r}!',
+        'Congratulations! But remember: this is top secret! Merry Christmas!'
+      ]
+    }
+  };
+
+  // ---------- Data ur länken ----------
+  let data;
+  const hash = location.hash.slice(1);
+  try {
+    if (hash === 'demo' || hash.startsWith('demo-')) {
+      const l = hash.split('-')[1] || 'pl';
+      data = { g: 'Demo', r: l === 'pl' ? 'Święty Mikołaj' : l === 'sv' ? 'Tomtefar' : 'Santa Claus', l, m: '', y: new Date().getFullYear() };
+    } else {
+      data = Santa.decode(hash);
+    }
+    if (!data || !data.g || !data.r) throw new Error();
+  } catch (e) {
+    $('landing').hidden = true; $('err').hidden = false;
+    data = null;
+  }
+  let T = TXT[(data && data.l) || 'pl'] || TXT.pl;
+  const fill = (s) => s.replace('{g}', data.g).replace('{r}', data.r);
+
+  // ljusslinga
+  const lights = $('lights');
+  for (let i = 0; i < Math.ceil(innerWidth / 34); i++) lights.append(document.createElement('i'));
+
+  // ---------- Snö ----------
+  const snow = $('snow'), sctx = snow.getContext('2d');
+  const fx = $('fx'), fctx = fx.getContext('2d');
+  let W, H, DPR;
+  function resize() {
+    DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+    [snow, fx].forEach(c => { c.width = W * DPR; c.height = H * DPR; c.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0); });
+  }
+  resize(); addEventListener('resize', resize);
+  const flakes = Array.from({ length: Math.min(180, Math.floor(innerWidth / 6)) }, () => ({
+    x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 2.6 + .6, s: Math.random() * .8 + .3, d: Math.random() * Math.PI * 2
+  }));
+  let wind = 0;
+
+  // ---------- Partiklar (konfetti/fyrverkeri) ----------
+  const parts = [];
+  const COLORS = ['#ff3b4e', '#ffd34d', '#3bff7a', '#4ab8ff', '#ffffff', '#ff8ad8'];
+  function confetti(n, x, y, power) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, v = (Math.random() * .8 + .2) * power;
+      parts.push({ t: 'c', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - power * .4, w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
+        rot: Math.random() * 6, vr: (Math.random() - .5) * .4, c: COLORS[i % COLORS.length], life: 1, decay: .0025 + Math.random() * .003 });
+    }
+  }
+  function firework(x, y) {
+    const c = COLORS[Math.floor(Math.random() * COLORS.length)], n = 70;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2, v = 3 + Math.random() * 3.5;
+      parts.push({ t: 's', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c, life: 1, decay: .012 + Math.random() * .01 });
+    }
+    Audio_.pop();
+  }
+  function frame() {
+    sctx.clearRect(0, 0, W, H);
+    sctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (const f of flakes) {
+      f.d += .01; f.y += f.s; f.x += Math.sin(f.d) * .5 + wind;
+      if (f.y > H + 5) { f.y = -5; f.x = Math.random() * W; }
+      if (f.x > W + 5) f.x = -5; if (f.x < -5) f.x = W + 5;
+      sctx.beginPath(); sctx.arc(f.x, f.y, f.r, 0, 7); sctx.fill();
+    }
+    wind *= .985;
+    fctx.clearRect(0, 0, W, H);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.life -= p.decay;
+      if (p.life <= 0 || p.y > H + 40) { parts.splice(i, 1); continue; }
+      fctx.globalAlpha = Math.min(1, p.life * 1.5);
+      if (p.t === 'c') {
+        p.vx *= .985; p.vy = p.vy * .985 + .18; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        fctx.save(); fctx.translate(p.x, p.y); fctx.rotate(p.rot); fctx.scale(1, Math.cos(p.rot * 2));
+        fctx.fillStyle = p.c; fctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); fctx.restore();
+      } else {
+        p.vx *= .96; p.vy = p.vy * .96 + .06; p.x += p.vx; p.y += p.vy;
+        fctx.fillStyle = p.c; fctx.beginPath(); fctx.arc(p.x, p.y, 2.2, 0, 7); fctx.fill();
+      }
+    }
+    fctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- Ljud (syntetiserat) ----------
+  const Audio_ = (() => {
+    let ctx, master, music, noiseBuf, muted = false;
+    function init() {
+      if (ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = .8; master.connect(ctx.destination);
+      music = ctx.createGain(); music.gain.value = .5; music.connect(master);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const now = () => ctx ? ctx.currentTime : 0;
+    function noise(t, dur, type, freq, q, vol, dest, attack) {
+      const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+      const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q || 1;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + (attack || .005)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f); f.connect(g); g.connect(dest || master); s.start(t); s.stop(t + dur + .05);
+      return { f, g };
+    }
+    function tone(t, freq, dur, type, vol, dest, attack) {
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + (attack || .01)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(dest || master); o.start(t); o.stop(t + dur + .05);
+      return o;
+    }
+    function bell(t, freq, vol, dest) {
+      [[1, 1, 1.4], [2.76, .5, .8], [5.4, .25, .5], [8.9, .12, .3]].forEach(([m, v, d]) => tone(t, freq * m, d, 'sine', vol * v, dest, .003));
+    }
+    function shaker(t, dest, vol) { noise(t, .09, 'highpass', 7000, 1, vol || .12, dest); tone(t, 5200 + Math.random() * 800, .08, 'triangle', .02, dest); }
+    // Radio-"inställning": brus + svepande ton
+    function tuneIn() {
+      if (!ctx) return; const t = now();
+      const n = noise(t, 1.1, 'bandpass', 1200, 2, .35, master, .02);
+      n.f.frequency.setValueAtTime(400, t); n.f.frequency.exponentialRampToValueAtTime(5000, t + 1);
+      const o = tone(t, 300, 1, 'sine', .05); o.frequency.exponentialRampToValueAtTime(2200, t + .9);
+      tone(t + 1.05, 1046.5, .15, 'square', .06); tone(t + 1.2, 1568, .3, 'square', .06);
+    }
+    // Jingle Bells-refräng (folkmelodi) som bakgrund
+    let musicTimer = null;
+    const E = 659.25, G = 783.99, C = 523.25, D = 587.33, F = 698.46;
+    const MEL = [[E,1],[E,1],[E,2],[E,1],[E,1],[E,2],[E,1],[G,1],[C,1.5],[D,.5],[E,4],[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[E,1],[D,1],[D,1],[E,1],[D,2],[G,2]];
+    const BASS = [130.81, 196, 130.81, 196, 130.81, 196, 130.81, 196, 174.61, 130.81, 174.61, 130.81, 146.83, 196, 146.83, 196];
+    function playLoop(start) {
+      const beat = 60 / 168;
+      let t = start;
+      MEL.forEach(([f, l]) => { bell(t, f, .16, music); t += l * beat; });
+      const total = t - start;
+      for (let i = 0, bt = start; bt < start + total - .01; i++, bt += beat * 2) tone(bt, BASS[i % BASS.length], beat * 1.6, 'triangle', .18, music);
+      for (let bt = start; bt < start + total - .01; bt += beat / 2) shaker(bt, music, .07);
+      return total;
+    }
+    function startMusic() {
+      if (!ctx) return;
+      music.gain.cancelScheduledValues(now()); music.gain.setValueAtTime(.5, now());
+      let t = now() + .05;
+      const go = () => { const d = playLoop(t); t += d; musicTimer = setTimeout(go, (t - now() - 1.5) * 1000); };
+      go();
+    }
+    function stopMusic() {
+      clearTimeout(musicTimer);
+      if (!ctx) return;
+      music.gain.cancelScheduledValues(now()); music.gain.setValueAtTime(music.gain.value, now());
+      music.gain.linearRampToValueAtTime(0, now() + .4);
+      // ny musikbuss så att gamla schemalagda toner tystnar
+      const old = music; setTimeout(() => old.disconnect(), 600);
+      music = ctx.createGain(); music.gain.value = .5; music.connect(master);
+    }
+    function duck(on) { if (!ctx) return; music.gain.setTargetAtTime(on ? .18 : .5, now(), .15); }
+    function drumroll(dur) {
+      if (!ctx) return; const t0 = now();
+      for (let t = 0; t < dur; t += .045) {
+        const p = t / dur;
+        noise(t0 + t, .06, 'bandpass', 1800 + p * 1200, .8, .08 + p * .45);
+        tone(t0 + t, 180, .05, 'triangle', .04 + p * .1);
+      }
+    }
+    function boom() {
+      if (!ctx) return; const t = now();
+      const k = tone(t, 140, .9, 'sine', 1); k.frequency.exponentialRampToValueAtTime(35, t + .8);
+      noise(t, 2.8, 'highpass', 3500, .7, .55);
+      noise(t, .5, 'lowpass', 600, 1, .6);
+      // fanfar
+      const fan = [[0, [523.25, 659.25, 783.99]], [.18, [523.25, 659.25, 783.99]], [.36, [523.25, 659.25, 783.99]], [.6, [698.46, 880, 1046.5]], [1.0, [783.99, 987.77, 1174.66, 1567.98]]];
+      fan.forEach(([dt, ch], i) => ch.forEach(f => {
+        const dur = i === fan.length - 1 ? 2.2 : .16;
+        const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; lp.connect(master);
+        tone(t + .15 + dt, f, dur, 'sawtooth', .07, lp, .02);
+        tone(t + .15 + dt, f * 1.005, dur, 'sawtooth', .05, lp, .02);
+      }));
+      for (let i = 0; i < 24; i++) bell(t + 1.2 + i * .09, [1046.5, 1318.5, 1568, 2093][i % 4], .07);
+    }
+    function pop() {
+      if (!ctx) return; const t = now() + Math.random() * .05;
+      noise(t, .25, 'lowpass', 1500, 1, .35); noise(t + .05, 1.2, 'highpass', 5000, 1, .06, master, .2);
+    }
+    function sparkle() { if (!ctx) return; const t = now(); [1568, 2093, 2637, 3136].forEach((f, i) => bell(t + i * .07, f, .06)); }
+    function setMuted(m) { muted = m; if (master) master.gain.setTargetAtTime(m ? 0 : .8, now(), .05); }
+    return { init, tuneIn, startMusic, stopMusic, duck, drumroll, boom, pop, sparkle, setMuted, get muted() { return muted; }, resume: () => ctx && ctx.resume() };
+  })();
+
+  // ---------- Röst (Web Speech) ----------
+  const synth = window.speechSynthesis;
+  let voice = null;
+  function pickVoice() {
+    if (!synth) return;
+    const vs = synth.getVoices(), lang = T.speech.toLowerCase(), short = lang.slice(0, 2);
+    const match = vs.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(short));
+    voice = match.find(v => /google|natural|neural|premium|enhanced|siri/i.test(v.name) && v.lang.replace('_', '-').toLowerCase() === lang)
+      || match.find(v => /google|natural|neural|premium|enhanced|siri/i.test(v.name))
+      || match.find(v => v.lang.replace('_', '-').toLowerCase() === lang) || match[0] || null;
+  }
+  if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; }
+
+  function applyTexts() {
+    document.documentElement.lang = T.speech.slice(0, 2);
+    $('tStamp').textContent = T.stamp; $('tFor').textContent = T.forTxt; $('tWho').textContent = data.g;
+    $('openBtn').textContent = T.open; $('tSound').textContent = T.sound; $('tNotYou').textContent = fill(T.notYou);
+    $('station').textContent = T.station; $('tShh').textContent = T.shh; $('replayBtn').textContent = T.replay;
+    $('skipBtn').textContent = T.skip; $('tMsg').textContent = data.m || ''; $('tYouAre').textContent = T.youAre;
+    document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', TXT[b.dataset.l] === T));
+    pickVoice();
+  }
+
+  let runId = 0;
+  function say(text, opts) {
+    opts = opts || {};
+    const est = 900 + text.length * 75;
+    return new Promise(res => {
+      let done = false;
+      const finish = () => { if (done) return; done = true; Audio_.duck(false); res(); };
+      if (!synth || Audio_.muted) { setTimeout(finish, est * .85); return; }
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = T.speech; if (voice) u.voice = voice;
+      u.rate = opts.rate || 1.12; u.pitch = opts.pitch || .9; u.volume = 1;
+      u.onend = finish; u.onerror = finish;
+      Audio_.duck(true);
+      synth.speak(u);
+      setTimeout(finish, est * 2 + 2500); // reserv om onend aldrig kommer
+    });
+  }
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function caption(text, highlight) {
+    const c = $('caption');
+    c.classList.remove('out');
+    const hl = (highlight || []).map(h => h.toLowerCase());
+    let html = '', i = 0, rest = text;
+    // markera namn i guld
+    const parts = [];
+    if (hl.length) {
+      const re = new RegExp('(' + hl.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'i');
+      rest.split(re).forEach(p => parts.push({ p, hl: re.test(p) && hl.includes(p.toLowerCase()) }));
+    } else parts.push({ p: rest, hl: false });
+    parts.forEach(({ p, hl }) => p.split(/(\s+)/).forEach(w => {
+      if (!w) return;
+      if (/^\s+$/.test(w)) { html += ' '; return; }
+      html += '<span class="w' + (hl ? ' hl' : '') + '" style="animation-delay:' + (i++ * 0.07).toFixed(2) + 's">' + esc(w) + '</span>';
+    }));
+    c.innerHTML = html;
+  }
+  function captionOut() { $('caption').classList.add('out'); }
+
+  function nameHTML(base, step) {
+    let i = 0;
+    return data.r.split(/\s+/).map(word => '<span style="white-space:nowrap">' + [...word].map(ch => {
+      const n = i++;
+      return '<span class="l" style="animation-delay:' + (base + n * step).toFixed(2) + 's,' + (n * .05).toFixed(2) + 's">' + esc(ch) + '</span>';
+    }).join('') + '</span>').join(' ');
+  }
+
+  // ---------- Showen ----------
+  async function show() {
+    const id = ++runId;
+    const alive = () => id === runId;
+    document.body.classList.add('live');
+    $('landing').hidden = true; $('reveal').hidden = true; $('final').hidden = true;
+    $('muteBtn').hidden = false; $('skipBtn').hidden = false;
+    const gift = $('gift'); gift.className = ''; $('giftWrap').classList.remove('in'); $('name').innerHTML = ''; $('count').innerHTML = '';
+
+    Audio_.tuneIn();
+    await sleep(1300); if (!alive()) return;
+    Audio_.startMusic();
+    const L = T.lines.map(fill);
+
+    caption(L[0]); await say(L[0]); if (!alive()) return;
+    wind = 3;
+    caption(L[1], [data.g]); await say(L[1]); if (!alive()) return;
+    $('giftWrap').classList.add('in'); Audio_.sparkle();
+    caption(L[2]); await say(L[2]); if (!alive()) return;
+
+    Audio_.stopMusic();
+    caption(L[3]); gift.className = 'shake1';
+    const roll = 5.2;
+    Audio_.drumroll(roll);
+    const rollStart = performance.now();
+    await say(L[3], { rate: 1.05, pitch: .8 }); if (!alive()) return;
+    caption(L[4]); gift.className = 'shake2';
+    say(L[4], { rate: 1.0 });
+    // nedräkning i slutet av virveln
+    const left = roll * 1000 - (performance.now() - rollStart) - 3000;
+    if (left > 0) await sleep(left); if (!alive()) return;
+    gift.className = 'shake3';
+    for (const n of ['3', '2', '1']) {
+      $('count').innerHTML = '<span>' + n + '</span>';
+      await sleep(1000); if (!alive()) return;
+    }
+    $('count').innerHTML = '';
+    if (synth) synth.cancel();
+
+    // BOOM
+    captionOut();
+    Audio_.boom();
+    $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go');
+    document.body.classList.add('boom'); setTimeout(() => document.body.classList.remove('boom'), 700);
+    gift.className = 'open';
+    confetti(260, W / 2, H * .46, 18);
+    setTimeout(() => { confetti(120, 0, H * .9, 16); confetti(120, W, H * .9, 16); }, 250);
+
+    $('tYouAre').textContent = T.youAre;
+    $('name').innerHTML = nameHTML(0.25, .06);
+    $('reveal').hidden = false;
+
+    await sleep(700); if (!alive()) return;
+    await say(L[5], { rate: .95, pitch: 1.1 }); if (!alive()) return;
+    for (let i = 0; i < 6; i++) setTimeout(() => alive() && firework(W * (.15 + Math.random() * .7), H * (.12 + Math.random() * .3)), i * 550);
+    await sleep(600); if (!alive()) return;
+    $('skipBtn').hidden = true;
+    $('final').hidden = false;
+    caption('');
+    await say(L[6]); if (!alive()) return;
+    Audio_.startMusic(); Audio_.duck(true);
+    // fortsatt fyrverkeri ibland
+    const fw = setInterval(() => { if (!alive()) return clearInterval(fw); firework(W * (.1 + Math.random() * .8), H * (.1 + Math.random() * .3)); }, 2600);
+  }
+
+  function skipToEnd() {
+    runId++;
+    if (synth) synth.cancel();
+    Audio_.stopMusic();
+    $('count').innerHTML = ''; captionOut();
+    $('gift').className = 'open'; $('giftWrap').classList.add('in');
+    Audio_.boom(); confetti(260, W / 2, H * .46, 18);
+    $('tYouAre').textContent = T.youAre;
+    $('name').innerHTML = nameHTML(0, .05);
+    $('reveal').hidden = false; $('final').hidden = false; $('skipBtn').hidden = true;
+  }
+
+  // ---------- Koppla ihop ----------
+  if (data) {
+    applyTexts();
+    $('langs').hidden = false;
+    document.querySelectorAll('#langs button').forEach(b => b.onclick = () => { T = TXT[b.dataset.l]; applyTexts(); });
+
+    $('openBtn').onclick = () => {
+      Audio_.init(); Audio_.resume();
+      // lås upp talsyntesen inom klicket (krävs på iOS)
+      if (synth) { synth.cancel(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); }
+      show();
+    };
+    $('replayBtn').onclick = () => { if (synth) synth.cancel(); Audio_.stopMusic(); show(); };
+    $('skipBtn').onclick = skipToEnd;
+    $('muteBtn').onclick = () => {
+      const m = !Audio_.muted; Audio_.setMuted(m); $('muteBtn').textContent = m ? '🔇' : '🔊';
+      if (m && synth) synth.cancel();
+    };
+  }
+})();
+</script>
+</body>
+</html>

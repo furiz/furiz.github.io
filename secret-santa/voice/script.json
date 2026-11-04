@@ -1,0 +1,46 @@
+{
+  "_info": "Manus för radioreklamen. [taggar] är regi för ElevenLabs v3 och visas inte i textremsorna. {name} byts mot namnet. Kör generate.py efter ändringar.",
+  "names": {
+    "bartek": "Bartek",
+    "kamila": "Kamila",
+    "danusia": "Danusia",
+    "krzysztof": "Krzysztof",
+    "adam": "Adam",
+    "ula": "Ula",
+    "tobias": "Tobias"
+  },
+  "aliases": {
+    "krysztof": "krzysztof",
+    "krzysiek": "krzysztof",
+    "bartosz": "bartek",
+    "danuta": "danusia",
+    "urszula": "ula",
+    "kamilka": "kamila"
+  },
+  "lines": {
+    "pl": {
+      "intro": "[shouting] Uwaga, uwaga! Grudzień dwa tysiące dwadzieścia sześć! [excited] Wielkie rodzinne losowanie Tajnego Mikołaja! Bartek! Kamila! Danusia! Krzysztof! Adam! Ula! [laughs] I… ten Szwed! Tobias! Prezenty! Emocje! Ceny? Nieważne! Takiego losowania jeszcze nie było!",
+      "hello": "[excited] {name}! Tak, ty! Słuchaj uważnie, bo to jest tylko dla ciebie!",
+      "hello_any": "[excited] Tak, ty! Słuchaj uważnie, bo to jest tylko dla ciebie!",
+      "hello_tobias": "[excited] Tobias! Tak, ty, nasz kochany Szwed! Słuchaj uważnie! Mówimy powoli… [laughs] żartujemy!",
+      "build": "[excited] Elfy liczyły! Renifery głosowały! Sam Święty Mikołaj osobiście podpisał! [whispers] Ściśle tajne. Nikomu ani słowa.",
+      "drum": "[shouting] Werble, proszę!",
+      "tease": "[dramatic] Osoba, którą obdarujesz w te Święta, to…",
+      "name": "[shouting] {name}!",
+      "name_tobias": "[shouting] Tobias! [laughs] Tak, ten Szwed!",
+      "outro": "[excited] Święta dwa tysiące dwadzieścia sześć! Tajny Mikołaj! Prezent ma być wielki, a sekret jeszcze większy! [whispers] Pamiętaj: ani słowa. [shouting] Wesołych Świąt!"
+    },
+    "en": {
+      "intro": "[shouting] Attention, attention! December twenty twenty-six! [excited] The great family Secret Santa draw! Bartek! Kamila! Danusia! Krzysztof! Adam! Ula! [laughs] And… the Swede! Tobias! Presents! Emotions! Prices? Who cares! There has never been a draw like this!",
+      "hello": "[excited] {name}! Yes, you! Listen closely, this one is just for you!",
+      "hello_any": "[excited] Yes, you! Listen closely, this one is just for you!",
+      "hello_tobias": "[excited] Tobias! Yes, you, our favourite Swede! Listen closely, this one is just for you!",
+      "build": "[excited] The elves have counted! The reindeer have voted! Santa himself has signed it! [whispers] Top secret. Not a word to anyone.",
+      "drum": "[shouting] Drumroll, please!",
+      "tease": "[dramatic] The person you will surprise this Christmas is…",
+      "name": "[shouting] {name}!",
+      "name_tobias": "[shouting] Tobias! [laughs] Yes, the Swede!",
+      "outro": "[excited] Christmas twenty twenty-six! Secret Santa! The present should be big, and the secret even bigger! [whispers] Remember: not a word. [shouting] Merry Christmas!"
+    }
+  }
+}

@@ -332,11 +332,33 @@
   // ---------- Ljud (syntetiserat) ----------
   const Audio_ = (() => {
     let ctx, master, music, noiseBuf, muted = false;
+    let keepAlive = null;
+    function silentWav() {
+      const n = 8000, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+      const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+      w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true);
+      v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+      v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+      for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+      let bin = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i++) bin += String.fromCharCode(u[i]);
+      return 'data:audio/wav;base64,' + btoa(bin);
+    }
     function init() {
       if (ctx) return;
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
+      // iOS: spela som "media" så att ljudlöst läge inte stänger av ljudet
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+      try {
+        const el = document.createElement('audio');
+        el.src = silentWav(); el.loop = true; el.setAttribute('playsinline', ''); el.volume = 0.01;
+        const pr = el.play(); if (pr && pr.catch) pr.catch(() => {});
+        keepAlive = el;
+      } catch (e) {}
       ctx = new AC();
+      // spela en tyst buffer direkt i klicket (krävs av äldre iOS)
+      try { const sb = ctx.createBufferSource(); sb.buffer = ctx.createBuffer(1, 1, 22050); sb.connect(ctx.destination); sb.start(0); } catch (e) {}
+      if (ctx.resume) ctx.resume().catch(() => {});
       master = ctx.createGain(); master.gain.value = .8; master.connect(ctx.destination);
       music = ctx.createGain(); music.gain.value = .5; music.connect(master);
       noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
@@ -359,7 +381,7 @@
       return o;
     }
     function bell(t, freq, vol, dest) {
-      [[1, 1, 1.4], [2.76, .5, .8], [5.4, .25, .5], [8.9, .12, .3]].forEach(([m, v, d]) => tone(t, freq * m, d, 'sine', vol * v, dest, .003));
+      [[1, 1, 1.4], [2.76, .5, .8], [5.4, .25, .5], [8.9, .12, .3]].forEach(([m, v, d]) => { if (freq * m < 16000) tone(t, freq * m, d, 'sine', vol * v, dest, .003); });
     }
     function shaker(t, dest, vol) { noise(t, .09, 'highpass', 7000, 1, vol || .12, dest); tone(t, 5200 + Math.random() * 800, .08, 'triangle', .02, dest); }
     // Radio-"inställning": brus + svepande ton
@@ -430,7 +452,7 @@
     }
     function sparkle() { if (!ctx) return; const t = now(); [1568, 2093, 2637, 3136].forEach((f, i) => bell(t + i * .07, f, .06)); }
     function setMuted(m) { muted = m; if (master) master.gain.setTargetAtTime(m ? 0 : .8, now(), .05); }
-    return { init, tuneIn, startMusic, stopMusic, duck, drumroll, boom, pop, sparkle, setMuted, get muted() { return muted; }, resume: () => ctx && ctx.resume() };
+    return { init, tuneIn, startMusic, stopMusic, duck, drumroll, boom, pop, sparkle, setMuted, get muted() { return muted; }, resume: () => { if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); if (keepAlive && keepAlive.paused) keepAlive.play().catch(() => {}); } };
   })();
 
   // ---------- Röst (Web Speech) ----------
@@ -594,6 +616,8 @@
     };
     $('replayBtn').onclick = () => { if (synth) synth.cancel(); Audio_.stopMusic(); show(); };
     $('skipBtn').onclick = skipToEnd;
+    document.addEventListener('pointerdown', () => Audio_.resume());
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) Audio_.resume(); });
     $('muteBtn').onclick = () => {
       const m = !Audio_.muted; Audio_.setMuted(m); $('muteBtn').textContent = m ? '🔇' : '🔊';
       if (m && synth) synth.cancel();

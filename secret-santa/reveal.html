@@ -251,7 +251,7 @@
   try {
     if (hash === 'demo' || hash.startsWith('demo-')) {
       const l = hash.split('-')[1] || 'pl';
-      data = { g: 'Demo', r: l === 'pl' ? 'Święty Mikołaj' : l === 'sv' ? 'Tomtefar' : 'Santa Claus', l, m: '', y: new Date().getFullYear() };
+      data = { g: 'Tobias', r: l === 'pl' ? 'Święty Mikołaj' : l === 'sv' ? 'Tomtefar' : 'Santa Claus', l, m: '', y: new Date().getFullYear() };
     } else {
       data = Santa.decode(hash);
     }
@@ -260,7 +260,8 @@
     $('landing').hidden = true; $('err').hidden = false;
     data = null;
   }
-  let T = TXT[(data && data.l) || 'pl'] || TXT.pl;
+  let lang = (data && TXT[data.l]) ? data.l : 'pl';
+  let T = TXT[lang];
   const fill = (s) => s.replace('{g}', data.g).replace('{r}', data.r);
 
   // ljusslinga
@@ -446,13 +447,27 @@
       }));
       for (let i = 0; i < 24; i++) bell(t + 1.2 + i * .09, [1046.5, 1318.5, 1568, 2093][i % 4], .07);
     }
+    let voiceSrc = null;
+    function decode(ab) { return ctx ? new Promise((res, rej) => ctx.decodeAudioData(ab.slice(0), res, rej)) : Promise.reject(new Error('no ctx')); }
+    function playBuffer(buf) {
+      return new Promise(res => {
+        if (!ctx) return res();
+        stopVoice();
+        const s = ctx.createBufferSource(); s.buffer = buf;
+        const g = ctx.createGain(); g.gain.value = 1.1;
+        s.connect(g); g.connect(master);
+        s.onended = () => { if (voiceSrc === s) voiceSrc = null; res(); };
+        voiceSrc = s; s.start();
+      });
+    }
+    function stopVoice() { if (voiceSrc) { const s = voiceSrc; voiceSrc = null; try { s.stop(); } catch (e) {} } }
     function pop() {
       if (!ctx) return; const t = now() + Math.random() * .05;
       noise(t, .25, 'lowpass', 1500, 1, .35); noise(t + .05, 1.2, 'highpass', 5000, 1, .06, master, .2);
     }
     function sparkle() { if (!ctx) return; const t = now(); [1568, 2093, 2637, 3136].forEach((f, i) => bell(t + i * .07, f, .06)); }
     function setMuted(m) { muted = m; if (master) master.gain.setTargetAtTime(m ? 0 : .8, now(), .05); }
-    return { init, tuneIn, startMusic, stopMusic, duck, drumroll, boom, pop, sparkle, setMuted, get muted() { return muted; }, resume: () => { if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); if (keepAlive && keepAlive.paused) keepAlive.play().catch(() => {}); } };
+    return { decode, playBuffer, stopVoice, hasCtx: () => !!ctx, init, tuneIn, startMusic, stopMusic, duck, drumroll, boom, pop, sparkle, setMuted, get muted() { return muted; }, resume: () => { if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); if (keepAlive && keepAlive.paused) keepAlive.play().catch(() => {}); } };
   })();
 
   // ---------- Röst (Web Speech) ----------
@@ -476,6 +491,92 @@
     $('skipBtn').textContent = T.skip; $('tMsg').textContent = data.m || ''; $('tYouAre').textContent = T.youAre;
     document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', TXT[b.dataset.l] === T));
     pickVoice();
+  }
+
+  // ---------- Inspelade röstklipp (ElevenLabs) ----------
+  const VOICE = { script: null, manifest: {} };
+  const voiceReady = Promise.all([
+    fetch('voice/script.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch('voice/manifest.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))
+  ]).then(([sc, mf]) => { VOICE.script = sc; VOICE.manifest = mf || {}; });
+  const stripTags = (t) => t.replace(/\[[^\]]*\]\s*/g, '').trim();
+  function slug(name) {
+    let s = String(name).toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
+    const al = VOICE.script && VOICE.script.aliases;
+    return (al && al[s]) || s;
+  }
+  const hasClip = (k) => (VOICE.manifest[lang] || []).includes(k);
+  // Bygger de sju replikerna: {key, text, hl}
+  function segments() {
+    const sc = VOICE.script, lines = sc && sc.lines && sc.lines[lang];
+    const names = sc ? Object.values(sc.names) : [];
+    if (!lines) {
+      const L = T.lines.map(fill);
+      return L.map((text, i) => ({ key: null, text, hl: i === 1 ? [data.g] : [] }));
+    }
+    const fillN = (t, n) => stripTags(t.replace('{name}', n));
+    const gs = slug(data.g), rs = slug(data.r);
+    let hello;
+    if (hasClip('hello_' + gs)) hello = { key: 'hello_' + gs, text: fillN(lines['hello_' + gs] || lines.hello, data.g) };
+    else if (hasClip('hello_any')) hello = { key: 'hello_any', text: stripTags(lines.hello_any) };
+    else hello = { key: null, text: fillN(lines.hello, data.g) };
+    hello.hl = [data.g];
+    return [
+      { key: 'intro', text: stripTags(lines.intro), hl: names },
+      hello,
+      { key: 'build', text: stripTags(lines.build), hl: [] },
+      { key: 'drum', text: stripTags(lines.drum), hl: [] },
+      { key: 'tease', text: stripTags(lines.tease), hl: [] },
+      { key: 'name_' + rs, text: fillN(lines['name_' + rs] || lines.name, data.r), hl: [data.r] },
+      { key: 'outro', text: stripTags(lines.outro), hl: [] }
+    ];
+  }
+  const clipCache = {};
+  function fetchClip(key) {
+    const id = lang + '/' + key;
+    if (!clipCache[id]) clipCache[id] = { ab: fetch('voice/' + id + '.mp3').then(r => r.ok ? r.arrayBuffer() : null).catch(() => null), buf: null };
+    return clipCache[id];
+  }
+  async function getBuffer(key) {
+    if (!key || !hasClip(key) || !Audio_.hasCtx()) return null;
+    const c = fetchClip(key);
+    if (c.buf) return c.buf;
+    const ab = await c.ab; if (!ab) return null;
+    try { c.buf = await Audio_.decode(ab); } catch (e) { return null; }
+    return c.buf;
+  }
+  function prefetch() {
+    voiceReady.then(() => { if (!data) return; segments().forEach(s => { if (s.key && hasClip(s.key)) fetchClip(s.key); }); });
+  }
+  prefetch();
+
+  // Textremsor i bitar, utspridda över klippets längd
+  let capTimers = [];
+  function captionTimed(text, hl, seconds) {
+    capTimers.forEach(clearTimeout); capTimers = [];
+    const parts = text.split(/(?<=[!?….])\s+/).reduce((acc, p) => {
+      const last = acc[acc.length - 1];
+      if (last && (last + ' ' + p).length <= 42) acc[acc.length - 1] = last + ' ' + p; else acc.push(p);
+      return acc;
+    }, []);
+    const total = parts.reduce((n, p) => n + p.length, 0) || 1;
+    let t = 0;
+    parts.forEach((p, i) => {
+      if (i === 0) caption(p, hl); else capTimers.push(setTimeout(() => caption(p, hl), t * 1000));
+      t += seconds * p.length / total;
+    });
+  }
+  async function speak(seg, opts) {
+    const buf = await getBuffer(seg.key);
+    if (buf) {
+      if (!(opts && opts.noCap)) captionTimed(seg.text, seg.hl, buf.duration);
+      Audio_.duck(true);
+      await Audio_.playBuffer(buf);
+      Audio_.duck(false);
+      return;
+    }
+    if (!(opts && opts.noCap)) captionTimed(seg.text, seg.hl, 0.9 + seg.text.length * 0.07);
+    return say(seg.text, opts);
   }
 
   let runId = 0;
@@ -537,22 +638,23 @@
     Audio_.tuneIn();
     await sleep(1300); if (!alive()) return;
     Audio_.startMusic();
-    const L = T.lines.map(fill);
+    await voiceReady;
+    const S = segments();
 
-    caption(L[0]); await say(L[0]); if (!alive()) return;
+    await speak(S[0]); if (!alive()) return;
     wind = 3;
-    caption(L[1], [data.g]); await say(L[1]); if (!alive()) return;
+    await speak(S[1]); if (!alive()) return;
     $('giftWrap').classList.add('in'); Audio_.sparkle();
-    caption(L[2]); await say(L[2]); if (!alive()) return;
+    await speak(S[2]); if (!alive()) return;
 
     Audio_.stopMusic();
-    caption(L[3]); gift.className = 'shake1';
+    gift.className = 'shake1';
     const roll = 5.2;
     Audio_.drumroll(roll);
     const rollStart = performance.now();
-    await say(L[3], { rate: 1.05, pitch: .8 }); if (!alive()) return;
-    caption(L[4]); gift.className = 'shake2';
-    say(L[4], { rate: 1.0 });
+    await speak(S[3], { rate: 1.05, pitch: .8 }); if (!alive()) return;
+    gift.className = 'shake2';
+    speak(S[4], { rate: 1.0 });
     // nedräkning i slutet av virveln
     const left = roll * 1000 - (performance.now() - rollStart) - 3000;
     if (left > 0) await sleep(left); if (!alive()) return;
@@ -563,6 +665,7 @@
     }
     $('count').innerHTML = '';
     if (synth) synth.cancel();
+    Audio_.stopVoice(); capTimers.forEach(clearTimeout);
 
     // BOOM
     captionOut();
@@ -578,13 +681,13 @@
     $('reveal').hidden = false;
 
     await sleep(700); if (!alive()) return;
-    await say(L[5], { rate: .95, pitch: 1.1 }); if (!alive()) return;
+    await speak(S[5], { rate: .95, pitch: 1.1, noCap: true }); if (!alive()) return;
     for (let i = 0; i < 6; i++) setTimeout(() => alive() && firework(W * (.15 + Math.random() * .7), H * (.12 + Math.random() * .3)), i * 550);
     await sleep(600); if (!alive()) return;
     $('skipBtn').hidden = true;
     $('final').hidden = false;
     caption('');
-    await say(L[6]); if (!alive()) return;
+    await speak(S[6], { noCap: true }); if (!alive()) return;
     Audio_.startMusic(); Audio_.duck(true);
     // fortsatt fyrverkeri ibland
     const fw = setInterval(() => { if (!alive()) return clearInterval(fw); firework(W * (.1 + Math.random() * .8), H * (.1 + Math.random() * .3)); }, 2600);
@@ -593,6 +696,7 @@
   function skipToEnd() {
     runId++;
     if (synth) synth.cancel();
+    Audio_.stopVoice(); capTimers.forEach(clearTimeout);
     Audio_.stopMusic();
     $('count').innerHTML = ''; captionOut();
     $('gift').className = 'open'; $('giftWrap').classList.add('in');
@@ -606,7 +710,7 @@
   if (data) {
     applyTexts();
     $('langs').hidden = false;
-    document.querySelectorAll('#langs button').forEach(b => b.onclick = () => { T = TXT[b.dataset.l]; applyTexts(); });
+    document.querySelectorAll('#langs button').forEach(b => b.onclick = () => { lang = b.dataset.l; T = TXT[lang]; applyTexts(); prefetch(); });
 
     $('openBtn').onclick = () => {
       Audio_.init(); Audio_.resume();
@@ -614,7 +718,7 @@
       if (synth) { synth.cancel(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); }
       show();
     };
-    $('replayBtn').onclick = () => { if (synth) synth.cancel(); Audio_.stopMusic(); show(); };
+    $('replayBtn').onclick = () => { if (synth) synth.cancel(); Audio_.stopVoice(); Audio_.stopMusic(); show(); };
     $('skipBtn').onclick = skipToEnd;
     document.addEventListener('pointerdown', () => Audio_.resume());
     document.addEventListener('visibilitychange', () => { if (!document.hidden) Audio_.resume(); });

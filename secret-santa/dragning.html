@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Secret Santa – Lottdragning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Inter:wght@400;600;800&display=swap&subset=latin-ext" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1a2e; --card: #13263f; --line: #24405f; --text: #f3f6fb; --muted: #9fb3cc;
+    --red: #e23a3a; --green: #1fa463; --gold: #ffcf4a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, #1d3a63 0%, var(--bg) 60%) fixed, var(--bg);
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-family: Lobster, cursive; font-weight: 400; font-size: clamp(2.4rem, 8vw, 3.6rem); margin: 0 0 4px; text-align: center; color: var(--gold); text-shadow: 0 3px 0 #8a1c1c, 0 0 30px rgba(255,207,74,.35); }
+  .sub { text-align: center; color: var(--muted); margin: 0 0 28px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 18px; }
+  label { display: block; font-weight: 600; margin: 0 0 6px; }
+  .hint { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
+  textarea, input[type=text], select {
+    width: 100%; font: inherit; color: var(--text); background: #0d1d33; border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px;
+  }
+  textarea { min-height: 170px; resize: vertical; line-height: 1.5; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .check { display: flex; gap: 10px; align-items: center; margin-top: 16px; font-weight: 400; }
+  button, .btn {
+    font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 12px 18px; cursor: pointer;
+    background: var(--red); color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+  }
+  button.big { width: 100%; justify-content: center; font-size: 1.2rem; padding: 16px; margin-top: 20px;
+    background: linear-gradient(135deg, #e23a3a, #b51f2c); box-shadow: 0 6px 0 #6e1018; }
+  button.big:active { transform: translateY(3px); box-shadow: 0 3px 0 #6e1018; }
+  .btn.ghost, button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 600; }
+  .err { color: #ff8b8b; margin-top: 12px; font-weight: 600; }
+  .warn { background: #3a2a0c; border: 1px solid #7a5a12; color: #ffe2a0; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+  .list { display: grid; gap: 10px; }
+  .person { display: flex; align-items: center; gap: 10px; background: #0d1d33; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .person .name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .person button { padding: 8px 12px; font-size: .9rem; }
+  .person.done { opacity: .55; }
+  .person.done .name::after { content: "  ✓ skickad"; color: var(--green); font-weight: 400; font-size: .85rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .center { text-align: center; }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 30px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(100px); background: var(--green); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 999px; transition: transform .25s; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎅 Secret Santa 🎄</h1>
+  <p class="sub">Dra lotter utan att någon – inte ens du – får veta vem som fått vem.</p>
+
+  <section class="card" id="setup">
+    <label for="names">Deltagare</label>
+    <textarea id="names" placeholder="Tobias, Anna&#10;Babcia, Dziadek&#10;Marek, Kasia, Zosia&#10;Ewa"></textarea>
+    <p class="hint">Ett <b>hushåll per rad</b>, namn separerade med komma. Personer på samma rad drar inte varandra.<br>🎙 Uppläsaren känner igen: Bartek, Kamila, Danusia, Krzysztof, Adam, Ula och Tobias – stava dem så.</p>
+
+    <div class="row">
+      <div>
+        <label for="lang">Standardspråk</label>
+        <select id="lang">
+          <option value="pl">Polski 🇵🇱</option>
+          <option value="en">English 🇬🇧</option>
+        </select>
+        <p class="hint">Mottagaren kan alltid byta mellan PL/EN.</p>
+      </div>
+      <div>
+        <label for="msg">Meddelande (valfritt)</label>
+        <input type="text" id="msg" maxlength="140" placeholder="t.ex. Budżet: 200 zł · 24.12">
+      </div>
+    </div>
+
+    <label class="check"><input type="checkbox" id="nomutual" checked> Undvik att två personer drar varandra</label>
+
+    <button class="big" id="drawBtn">🎲 Dra lotter</button>
+    <div class="err" id="err" hidden></div>
+    <p class="hint center" style="margin-top:14px"><a class="btn ghost" href="reveal.html#demo" target="_blank">▶ Förhandsvisa showen (demo)</a></p>
+  </section>
+
+  <section class="card" id="result" hidden>
+    <div class="warn">🤫 <b>Klart!</b> Ingen dragning visas här. Skicka varje länk <b>till rätt person</b> (t.ex. via WhatsApp/SMS) – och öppna inte andras länkar, då förstör du överraskningen. Din egen länk öppnar du själv.</div>
+    <div class="list" id="list"></div>
+    <div class="actions">
+      <button class="ghost" id="redo">🔁 Dra om</button>
+    </div>
+  </section>
+
+  <footer>Allt sker i din webbläsare. Inget sparas på någon server.</footer>
+</main>
+<div class="toast" id="toast">Länk kopierad!</div>
+
+<script src="santa.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const STORE = 'secret-santa-draw-v1';
+
+  function store(key, val) { try { val === undefined ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+  function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
+
+  function toast(text) {
+    const t = $('toast'); t.textContent = text; t.classList.add('show');
+    clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  function parse() {
+    const people = [];
+    $('names').value.split('\n').forEach((line, gi) => {
+      line.split(/[,;]/).map(s => s.trim()).filter(Boolean).forEach(name => people.push({ name, group: gi }));
+    });
+    return people;
+  }
+
+  function render(state) {
+    $('setup').hidden = true;
+    $('result').hidden = false;
+    const list = $('list'); list.innerHTML = '';
+    state.links.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'person' + (state.sent[i] ? ' done' : '');
+      const name = document.createElement('span'); name.className = 'name'; name.textContent = '🎁 ' + p.name;
+      const copy = document.createElement('button'); copy.textContent = '📋 Kopiera länk';
+      copy.onclick = async () => {
+        try { await navigator.clipboard.writeText(p.url); toast('Länk till ' + p.name + ' kopierad!'); }
+        catch (e) { window.prompt('Kopiera länken till ' + p.name + ':', p.url); }
+        mark(i);
+      };
+      row.append(name, copy);
+      if (navigator.share) {
+        const share = document.createElement('button'); share.className = 'ghost'; share.textContent = 'Dela';
+        share.onclick = async () => {
+          try { await navigator.share({ title: 'Secret Santa 🎅', text: '🎅 ' + p.name + ' – ' + p.url }); mark(i); } catch (e) {}
+        };
+        row.append(share);
+      }
+      list.append(row);
+    });
+    function mark(i) { state.sent[i] = true; store(STORE, state); list.children[i].classList.add('done'); }
+  }
+
+  $('drawBtn').onclick = () => {
+    const err = $('err'); err.hidden = true;
+    const people = parse();
+    const names = people.map(p => p.name.toLowerCase());
+    if (people.length < 3) { err.textContent = 'Lägg till minst 3 personer.'; err.hidden = false; return; }
+    if (new Set(names).size !== names.length) { err.textContent = 'Två personer har samma namn – lägg till t.ex. en initial.'; err.hidden = false; return; }
+    const noMutual = $('nomutual').checked;
+    const result = Santa.draw(people, noMutual);
+    if (!result) {
+      err.textContent = 'Det gick inte att dra lotter med de reglerna. Prova att stänga av "undvik att två drar varandra" eller dela upp stora hushåll.';
+      err.hidden = false; return;
+    }
+    const lang = $('lang').value, msg = $('msg').value.trim(), year = new Date().getFullYear();
+    const base = new URL('reveal.html', location.href).href;
+    const links = people.map((p, i) => ({
+      name: p.name,
+      url: base + '#' + Santa.encode({ g: p.name, r: people[result[i]].name, l: lang, m: msg, y: year })
+    }));
+    // Blanda listan så att ordningen inte avslöjar något
+    const state = { links: Santa.shuffle(links).sort((a, b) => a.name.localeCompare(b.name)), sent: [], input: $('names').value };
+    store(STORE, state);
+    render(state);
+  };
+
+  $('redo').onclick = () => {
+    if (!confirm('Dra om? De gamla länkarna blir då fel – skicka bara ut de nya.')) return;
+    const prev = load(STORE);
+    store(STORE, undefined);
+    $('result').hidden = true; $('setup').hidden = false;
+    if (prev && prev.input) $('names').value = prev.input;
+  };
+
+  const saved = load(STORE);
+  if (saved && saved.links) render(saved);
+})();
+</script>
+</body>
+</html>

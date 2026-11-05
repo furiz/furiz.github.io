@@ -28,7 +28,8 @@
       "tease": "[dramatic] Osoba, którą obdarujesz w te Święta, to…",
       "name": "[shouting] {name}!",
       "name_tobias": "[shouting] Tobias! [laughs] Tak, ten Szwed!",
-      "outro": "[excited] Święta dwa tysiące dwadzieścia sześć! Tajny Mikołaj! Prezent ma być wielki, a sekret jeszcze większy! [whispers] Pamiętaj: ani słowa. [shouting] Wesołych Świąt!"
+      "outro": "[excited] Święta dwa tysiące dwadzieścia sześć! Tajny Mikołaj! Prezent ma być wielki, a sekret jeszcze większy! [whispers] Pamiętaj: ani słowa. [shouting] Wesołych Świąt!",
+      "hello_adam": "[excited] Ahh, Adam! Nasz kochany dziadek! Leo i Liwia mają najlepszego dziadka na świecie! Słuchaj uważnie, bo to jest tylko dla ciebie!"
     },
     "en": {
       "intro": "[shouting] Attention, attention! December twenty twenty-six! [excited] The great family Secret Santa draw! Bartek! Kamila! Danusia! Krzysztof! Adam! Ula! [laughs] And… the Swede! Tobias! Presents! Emotions! Prices? Who cares! There has never been a draw like this!",
@@ -40,7 +41,8 @@
       "tease": "[dramatic] The person you will surprise this Christmas is…",
       "name": "[shouting] {name}!",
       "name_tobias": "[shouting] Tobias! [laughs] Yes, the Swede!",
-      "outro": "[excited] Christmas twenty twenty-six! Secret Santa! The present should be big, and the secret even bigger! [whispers] Remember: not a word. [shouting] Merry Christmas!"
+      "outro": "[excited] Christmas twenty twenty-six! Secret Santa! The present should be big, and the secret even bigger! [whispers] Remember: not a word. [shouting] Merry Christmas!",
+      "hello_adam": "[excited] Ahh, Adam! Our dear grandpa! Leo and Liwia have the best grandpa in the world! Listen closely, this one is just for you!"
     }
   }
 }

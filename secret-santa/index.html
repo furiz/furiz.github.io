@@ -1,186 +1,247 @@
 <!doctype html>
-<html lang="sv">
+<html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Secret Santa – Lottdragning</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Secret Santa 2026 🎅</title>
+<meta name="description" content="Witamy w Secret Santa 2026! Już wkrótce dostaniesz swój osobisty link.">
+<meta property="og:title" content="🎅 Secret Santa 2026">
+<meta property="og:description" content="Już wkrótce ten Szwed Tobias wyśle Ci osobisty link. Ściśle tajne!">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Inter:wght@400;600;800&display=swap&subset=latin-ext" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lobster&family=Inter:wght@400;700;900&display=swap&subset=latin-ext" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0b1a2e; --card: #13263f; --line: #24405f; --text: #f3f6fb; --muted: #9fb3cc;
-    --red: #e23a3a; --green: #1fa463; --gold: #ffcf4a;
-  }
+  :root { --gold: #ffd34d; --red: #e3263a; --night: #050b1a; }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; color: var(--text);
-    font-family: Inter, system-ui, sans-serif;
-    background: radial-gradient(ellipse at top, #1d3a63 0%, var(--bg) 60%) fixed, var(--bg);
-  }
-  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
-  h1 { font-family: Lobster, cursive; font-weight: 400; font-size: clamp(2.4rem, 8vw, 3.6rem); margin: 0 0 4px; text-align: center; color: var(--gold); text-shadow: 0 3px 0 #8a1c1c, 0 0 30px rgba(255,207,74,.35); }
-  .sub { text-align: center; color: var(--muted); margin: 0 0 28px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 18px; }
-  label { display: block; font-weight: 600; margin: 0 0 6px; }
-  .hint { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
-  textarea, input[type=text], select {
-    width: 100%; font: inherit; color: var(--text); background: #0d1d33; border: 1px solid var(--line);
-    border-radius: 10px; padding: 10px 12px;
-  }
-  textarea { min-height: 170px; resize: vertical; line-height: 1.5; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
-  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
-  .check { display: flex; gap: 10px; align-items: center; margin-top: 16px; font-weight: 400; }
-  button, .btn {
-    font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 12px 18px; cursor: pointer;
-    background: var(--red); color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-  }
-  button.big { width: 100%; justify-content: center; font-size: 1.2rem; padding: 16px; margin-top: 20px;
-    background: linear-gradient(135deg, #e23a3a, #b51f2c); box-shadow: 0 6px 0 #6e1018; }
-  button.big:active { transform: translateY(3px); box-shadow: 0 3px 0 #6e1018; }
-  .btn.ghost, button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 600; }
-  .err { color: #ff8b8b; margin-top: 12px; font-weight: 600; }
-  .warn { background: #3a2a0c; border: 1px solid #7a5a12; color: #ffe2a0; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
-  .list { display: grid; gap: 10px; }
-  .person { display: flex; align-items: center; gap: 10px; background: #0d1d33; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
-  .person .name { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .person button { padding: 8px 12px; font-size: .9rem; }
-  .person.done { opacity: .55; }
-  .person.done .name::after { content: "  ✓ skickad"; color: var(--green); font-weight: 400; font-size: .85rem; }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-  .center { text-align: center; }
-  footer { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 30px; }
-  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(100px); background: var(--green); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 999px; transition: transform .25s; }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+  html, body { margin: 0; min-height: 100%; background: var(--night); color: #fff; font-family: Inter, system-ui, sans-serif; overflow-x: hidden; }
+  #sky { position: fixed; inset: 0; z-index: 0; background:
+      radial-gradient(ellipse at 50% 120%, #3a0d1c 0%, transparent 60%),
+      radial-gradient(ellipse at 50% -20%, #12305a 0%, transparent 65%), var(--night); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #snow { z-index: 1; } #fx { z-index: 30; }
+
+  .beam { position: fixed; bottom: -10vh; width: 40vw; height: 140vh; transform-origin: 50% 100%; z-index: 1; pointer-events: none;
+    background: linear-gradient(to top, rgba(255,240,190,.28), rgba(255,240,190,0) 85%);
+    clip-path: polygon(45% 100%, 55% 100%, 100% 0, 0 0); filter: blur(6px); mix-blend-mode: screen; }
+  .beam.l { left: -5vw; animation: swingL 4s ease-in-out infinite alternate; }
+  .beam.r { right: -5vw; animation: swingR 4.6s ease-in-out infinite alternate; }
+  .beam.c { left: 30vw; background: linear-gradient(to top, rgba(255,90,110,.25), transparent 80%); animation: swingL 3.3s ease-in-out infinite alternate-reverse; }
+  @keyframes swingL { from { transform: rotate(-35deg); } to { transform: rotate(25deg); } }
+  @keyframes swingR { from { transform: rotate(35deg); } to { transform: rotate(-25deg); } }
+
+  #lights { position: fixed; top: 0; left: 0; right: 0; height: 40px; display: flex; justify-content: space-around; z-index: 5; pointer-events: none; }
+  #lights::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 18px; border-bottom: 2px solid #1d2b1d; border-radius: 0 0 50% 50%; }
+  #lights i { width: 12px; height: 18px; margin-top: 16px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; animation: blink 1.2s infinite; }
+  #lights i:nth-child(4n+1) { background: #ff3b4e; color: #ff3b4e; }
+  #lights i:nth-child(4n+2) { background: #3bff7a; color: #3bff7a; animation-delay: .3s; }
+  #lights i:nth-child(4n+3) { background: #ffd34d; color: #ffd34d; animation-delay: .6s; }
+  #lights i:nth-child(4n+4) { background: #4ab8ff; color: #4ab8ff; animation-delay: .9s; }
+  @keyframes blink { 0%, 100% { opacity: 1; box-shadow: 0 0 12px 3px currentColor; } 50% { opacity: .35; box-shadow: none; } }
+
+  #langs { position: fixed; top: 52px; right: 14px; z-index: 20; display: flex; gap: 6px; }
+  #langs button { font: 700 .85rem Inter, sans-serif; color: #fff; background: #0008; border: 1px solid #ffffff30; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  #langs button.on { background: var(--gold); color: #3a1a00; border-color: var(--gold); }
+
+  main { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 96px 16px 40px; max-width: 760px; margin: 0 auto; }
+
+  .radio { display: inline-flex; align-items: center; gap: 10px; background: #111a; backdrop-filter: blur(6px); border: 2px solid #ffffff22; border-radius: 14px; padding: 6px 14px;
+    font-family: Anton, Impact, sans-serif; letter-spacing: .06em; font-size: clamp(.75rem, 3.2vw, 1rem); opacity: 0; animation: drop .8s .2s cubic-bezier(.2,1.6,.4,1) forwards; }
+  .radio .onair { background: #ff1f3d; padding: 2px 8px; border-radius: 6px; animation: onair 1s infinite; }
+  @keyframes onair { 50% { background: #5a0b16; color: #ff8a9a; } }
+  @keyframes drop { from { opacity: 0; transform: translateY(-60px); } to { opacity: 1; transform: none; } }
+
+  .welcome { font-family: Anton, Impact, sans-serif; text-transform: uppercase; letter-spacing: .12em; color: #ffe7a8; font-size: clamp(1rem, 4.5vw, 1.6rem); margin: 26px 0 0; opacity: 0; animation: fadeUp .7s .6s forwards; }
+  h1 { font-family: Lobster, cursive; font-weight: 400; margin: 4px 0 0; line-height: .95; font-size: clamp(3.4rem, 17vw, 8.5rem); }
+  h1 .l { display: inline-block; opacity: 0; transform: translateY(-120px) scale(2.6) rotate(-18deg);
+    background: linear-gradient(100deg, #fff6c9 0%, #ffd34d 30%, #fff 45%, #ffbf1f 60%, #fff3b0 100%); background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 6px 0 #7a1020) drop-shadow(0 0 24px rgba(255,200,60,.6));
+    animation: letterIn .7s cubic-bezier(.2,1.6,.4,1) forwards, shimmer 3s linear infinite; }
+  .year { display: block; font-family: Anton, Impact, sans-serif; font-size: clamp(3rem, 16vw, 8rem); letter-spacing: .08em; color: #fff; line-height: 1;
+    text-shadow: 0 0 20px #ff3b4e, 0 0 50px #ff3b4e, 0 6px 0 #6e0a18; opacity: 0; animation: zoom .9s 1.7s cubic-bezier(.2,1.6,.4,1) forwards, neon 2.2s 2.6s infinite; }
+  @keyframes letterIn { to { opacity: 1; transform: none; } }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -200% 0; } }
+  @keyframes zoom { from { opacity: 0; transform: scale(3); } to { opacity: 1; transform: none; } }
+  @keyframes neon { 0%, 100% { text-shadow: 0 0 20px #ff3b4e, 0 0 50px #ff3b4e, 0 6px 0 #6e0a18; } 50% { text-shadow: 0 0 10px #ff3b4e, 0 0 24px #ff3b4e, 0 6px 0 #6e0a18; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+  .msg { font-size: clamp(1.1rem, 4.4vw, 1.5rem); line-height: 1.45; max-width: 620px; margin: 28px 0 0; opacity: 0; animation: fadeUp .8s 2.4s forwards; color: #e8eef8; }
+  .msg b { color: var(--gold); }
+  .msg .swede { display: inline-block; font-weight: 900; color: #fecc02; background: #006aa7; padding: 0 10px; border-radius: 8px; transform: rotate(-2deg); box-shadow: 0 0 0 2px #fecc02, 0 4px 14px #006aa788; }
+  .you { display: block; margin: 18px 0 0; font-family: Anton, Impact, sans-serif; text-transform: uppercase; font-size: clamp(2.4rem, 13vw, 5.5rem); line-height: 1; color: #fff;
+    text-shadow: 0 0 30px var(--gold), 0 6px 0 #7a1020; opacity: 0; animation: zoom .8s 3.2s cubic-bezier(.2,1.6,.4,1) forwards, pulse 1.4s 4s infinite; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  .msg2 { font-size: clamp(1.05rem, 4.2vw, 1.4rem); margin: 10px 0 0; color: #e8eef8; opacity: 0; animation: fadeUp .8s 3.6s forwards; }
+  .msg2 b { color: var(--gold); }
+
+  .names { width: 100vw; overflow: hidden; margin: 34px 0 0; padding: 12px 0; background: linear-gradient(90deg, transparent, #ffffff12 15%, #ffffff12 85%, transparent);
+    border-block: 1px solid #ffffff1f; opacity: 0; animation: fadeUp .8s 4s forwards; }
+  .track { display: inline-flex; gap: 34px; white-space: nowrap; animation: marquee 22s linear infinite; font-family: Anton, Impact, sans-serif; letter-spacing: .05em; font-size: clamp(1.2rem, 5vw, 1.9rem); }
+  .track span:nth-child(odd) { color: var(--gold); }
+  .track em { font-style: normal; color: #ff5a6e; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .count { margin: 30px 0 0; opacity: 0; animation: fadeUp .8s 4.4s forwards; }
+  .count .lbl { font-family: Anton, Impact, sans-serif; text-transform: uppercase; letter-spacing: .1em; color: #ffe7a8; font-size: clamp(.9rem, 3.6vw, 1.15rem); }
+  .boxes { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+  .box { min-width: 70px; background: rgba(10,20,40,.7); border: 1px solid #ffffff26; border-radius: 14px; padding: 10px 8px 8px; backdrop-filter: blur(6px); }
+  .box b { display: block; font-family: Anton, Impact, sans-serif; font-size: clamp(1.8rem, 8vw, 2.6rem); line-height: 1; font-weight: 400; }
+  .box small { color: #9fb3cc; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+
+  #listen { margin-top: 30px; font: 900 clamp(1.05rem, 4.5vw, 1.35rem) Inter, sans-serif; color: #fff; border: 0; cursor: pointer; padding: 16px 30px; border-radius: 999px;
+    background: linear-gradient(135deg, #ff3d52, #b0102a); box-shadow: 0 8px 0 #5c0715; opacity: 0; animation: fadeUp .8s 4.8s forwards, glow 1.6s 5.6s infinite; }
+  #listen:active { transform: translateY(4px); box-shadow: 0 4px 0 #5c0715; }
+  #listen.playing { background: linear-gradient(135deg, #1fa463, #0d6b3c); box-shadow: 0 8px 0 #06331c; }
+  @keyframes glow { 0% { box-shadow: 0 8px 0 #5c0715, 0 0 0 0 rgba(255,61,82,.6); } 70% { box-shadow: 0 8px 0 #5c0715, 0 0 0 24px rgba(255,61,82,0); } 100% { box-shadow: 0 8px 0 #5c0715, 0 0 0 0 rgba(255,61,82,0); } }
+  .secret { margin: 26px 0 0; color: #9fb3cc; font-size: .95rem; opacity: 0; animation: fadeUp .8s 5.2s forwards; }
+
+  @media (prefers-reduced-motion: reduce) { .track { animation-duration: 60s; } .you { animation: zoom .8s 3.2s forwards; } }
 </style>
 </head>
 <body>
+<div id="sky"></div>
+<div class="beam l"></div><div class="beam c"></div><div class="beam r"></div>
+<canvas id="snow"></canvas>
+<div id="lights"></div>
+<div id="langs"><button data-l="pl">🇵🇱 PL</button><button data-l="en">🇬🇧 EN</button></div>
+
 <main>
-  <h1>🎅 Secret Santa 🎄</h1>
-  <p class="sub">Dra lotter utan att någon – inte ens du – får veta vem som fått vem.</p>
-
-  <section class="card" id="setup">
-    <label for="names">Deltagare</label>
-    <textarea id="names" placeholder="Tobias, Anna&#10;Babcia, Dziadek&#10;Marek, Kasia, Zosia&#10;Ewa"></textarea>
-    <p class="hint">Ett <b>hushåll per rad</b>, namn separerade med komma. Personer på samma rad drar inte varandra.<br>🎙 Uppläsaren känner igen: Bartek, Kamila, Danusia, Krzysztof, Adam, Ula och Tobias – stava dem så.</p>
-
-    <div class="row">
-      <div>
-        <label for="lang">Standardspråk</label>
-        <select id="lang">
-          <option value="pl">Polski 🇵🇱</option>
-          <option value="en">English 🇬🇧</option>
-        </select>
-        <p class="hint">Mottagaren kan alltid byta mellan PL/EN.</p>
-      </div>
-      <div>
-        <label for="msg">Meddelande (valfritt)</label>
-        <input type="text" id="msg" maxlength="140" placeholder="t.ex. Budżet: 200 zł · 24.12">
-      </div>
+  <div class="radio"><span class="onair">ON AIR</span><span data-t="station"></span></div>
+  <p class="welcome" data-t="welcome"></p>
+  <h1><span id="title"></span><span class="year">2026</span></h1>
+  <p class="msg" data-t="msg"></p>
+  <span class="you" data-t="you"></span>
+  <p class="msg2" data-t="msg2"></p>
+  <div class="names"><div class="track" id="track"></div></div>
+  <div class="count">
+    <div class="lbl" data-t="countLbl"></div>
+    <div class="boxes">
+      <div class="box"><b id="cd">0</b><small data-t="d"></small></div>
+      <div class="box"><b id="ch">0</b><small data-t="h"></small></div>
+      <div class="box"><b id="cm">0</b><small data-t="m"></small></div>
+      <div class="box"><b id="cs">0</b><small data-t="s"></small></div>
     </div>
-
-    <label class="check"><input type="checkbox" id="nomutual" checked> Undvik att två personer drar varandra</label>
-
-    <button class="big" id="drawBtn">🎲 Dra lotter</button>
-    <div class="err" id="err" hidden></div>
-    <p class="hint center" style="margin-top:14px"><a class="btn ghost" href="reveal.html#demo" target="_blank">▶ Förhandsvisa showen (demo)</a></p>
-  </section>
-
-  <section class="card" id="result" hidden>
-    <div class="warn">🤫 <b>Klart!</b> Ingen dragning visas här. Skicka varje länk <b>till rätt person</b> (t.ex. via WhatsApp/SMS) – och öppna inte andras länkar, då förstör du överraskningen. Din egen länk öppnar du själv.</div>
-    <div class="list" id="list"></div>
-    <div class="actions">
-      <button class="ghost" id="redo">🔁 Dra om</button>
-    </div>
-  </section>
-
-  <footer>Allt sker i din webbläsare. Inget sparas på någon server.</footer>
+  </div>
+  <button id="listen"></button>
+  <p class="secret" data-t="secret"></p>
 </main>
-<div class="toast" id="toast">Länk kopierad!</div>
+<canvas id="fx"></canvas>
+<audio id="ad" src="voice/pl/intro.mp3" preload="auto" playsinline></audio>
 
-<script src="santa.js"></script>
 <script>
 (function () {
+  'use strict';
   const $ = (id) => document.getElementById(id);
-  const STORE = 'secret-santa-draw-v1';
-
-  function store(key, val) { try { val === undefined ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
-  function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
-
-  function toast(text) {
-    const t = $('toast'); t.textContent = text; t.classList.add('show');
-    clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove('show'), 1600);
-  }
-
-  function parse() {
-    const people = [];
-    $('names').value.split('\n').forEach((line, gi) => {
-      line.split(/[,;]/).map(s => s.trim()).filter(Boolean).forEach(name => people.push({ name, group: gi }));
-    });
-    return people;
-  }
-
-  function render(state) {
-    $('setup').hidden = true;
-    $('result').hidden = false;
-    const list = $('list'); list.innerHTML = '';
-    state.links.forEach((p, i) => {
-      const row = document.createElement('div');
-      row.className = 'person' + (state.sent[i] ? ' done' : '');
-      const name = document.createElement('span'); name.className = 'name'; name.textContent = '🎁 ' + p.name;
-      const copy = document.createElement('button'); copy.textContent = '📋 Kopiera länk';
-      copy.onclick = async () => {
-        try { await navigator.clipboard.writeText(p.url); toast('Länk till ' + p.name + ' kopierad!'); }
-        catch (e) { window.prompt('Kopiera länken till ' + p.name + ':', p.url); }
-        mark(i);
-      };
-      row.append(name, copy);
-      if (navigator.share) {
-        const share = document.createElement('button'); share.className = 'ghost'; share.textContent = 'Dela';
-        share.onclick = async () => {
-          try { await navigator.share({ title: 'Secret Santa 🎅', text: '🎅 ' + p.name + ' – ' + p.url }); mark(i); } catch (e) {}
-        };
-        row.append(share);
-      }
-      list.append(row);
-    });
-    function mark(i) { state.sent[i] = true; store(STORE, state); list.children[i].classList.add('done'); }
-  }
-
-  $('drawBtn').onclick = () => {
-    const err = $('err'); err.hidden = true;
-    const people = parse();
-    const names = people.map(p => p.name.toLowerCase());
-    if (people.length < 3) { err.textContent = 'Lägg till minst 3 personer.'; err.hidden = false; return; }
-    if (new Set(names).size !== names.length) { err.textContent = 'Två personer har samma namn – lägg till t.ex. en initial.'; err.hidden = false; return; }
-    const noMutual = $('nomutual').checked;
-    const result = Santa.draw(people, noMutual);
-    if (!result) {
-      err.textContent = 'Det gick inte att dra lotter med de reglerna. Prova att stänga av "undvik att två drar varandra" eller dela upp stora hushåll.';
-      err.hidden = false; return;
+  const TXT = {
+    pl: {
+      station: 'RADIO BIEGUN PÓŁNOCNY 104,7 FM',
+      welcome: 'Witamy w',
+      msg: 'Już wkrótce <span class="swede">🇸🇪 ten Szwed – Tobias</span> wyśle Ci <b>osobisty link</b>. Tylko po jego otwarciu dowiesz się, kogo los wybrał dla',
+      you: 'Ciebie!',
+      msg2: 'Tak, właśnie <b>TY</b> poznasz swoją osobę w tegorocznej edycji <b>Secret Santa</b>.',
+      countLbl: '🎄 Do Wigilii zostało',
+      d: 'dni', h: 'godz', m: 'min', s: 'sek',
+      listen: '🔊 Posłuchaj zapowiedzi', stop: '⏸ Pauza',
+      secret: '🤫 Ściśle tajne. Nie zgaduj. Nie podglądaj. Czekaj na link!'
+    },
+    en: {
+      station: 'RADIO NORTH POLE 104.7 FM',
+      welcome: 'Welcome to',
+      msg: 'Very soon <span class="swede">🇸🇪 the Swede – Tobias</span> will send you a <b>personal link</b>. Only when you open it will you find out who fate has chosen for',
+      you: 'You!',
+      msg2: 'Yes, <b>YOU</b> will discover your person in this year’s edition of <b>Secret Santa</b>.',
+      countLbl: '🎄 Countdown to Christmas Eve',
+      d: 'days', h: 'hrs', m: 'min', s: 'sec',
+      listen: '🔊 Hear the announcement', stop: '⏸ Pause',
+      secret: '🤫 Top secret. No guessing. No peeking. Wait for your link!'
     }
-    const lang = $('lang').value, msg = $('msg').value.trim(), year = new Date().getFullYear();
-    const base = new URL('reveal.html', location.href).href;
-    const links = people.map((p, i) => ({
-      name: p.name,
-      url: base + '#' + Santa.encode({ g: p.name, r: people[result[i]].name, l: lang, m: msg, y: year })
-    }));
-    // Blanda listan så att ordningen inte avslöjar något
-    const state = { links: Santa.shuffle(links).sort((a, b) => a.name.localeCompare(b.name)), sent: [], input: $('names').value };
-    store(STORE, state);
-    render(state);
   };
+  let lang = 'pl';
+  try { const q = new URLSearchParams(location.search).get('lang'); if (TXT[q]) lang = q; } catch (e) {}
 
-  $('redo').onclick = () => {
-    if (!confirm('Dra om? De gamla länkarna blir då fel – skicka bara ut de nya.')) return;
-    const prev = load(STORE);
-    store(STORE, undefined);
-    $('result').hidden = true; $('setup').hidden = false;
-    if (prev && prev.input) $('names').value = prev.input;
+  // Rubrik bokstav för bokstav
+  const title = 'Secret Santa';
+  $('title').innerHTML = title.split(' ').map((w, wi) => '<span style="white-space:nowrap">' +
+    [...w].map((ch, i) => '<span class="l" style="animation-delay:' + (0.9 + (wi * 6 + i) * 0.06).toFixed(2) + 's,' + (i * .05).toFixed(2) + 's">' + ch + '</span>').join('') +
+    '</span>').join(' ');
+
+  // Namnslinga
+  const names = ['Bartek', 'Kamila', 'Danusia', 'Krzysztof', 'Adam', 'Ula', 'Tobias'];
+  const one = names.map(n => '<span>' + n + '</span><em>★</em>').join('');
+  $('track').innerHTML = one + one + one + one;
+
+  function apply() {
+    const T = TXT[lang];
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-t]').forEach(el => { el.innerHTML = T[el.dataset.t]; });
+    $('listen').textContent = $('ad').paused ? T.listen : T.stop;
+    document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
+  }
+  document.querySelectorAll('#langs button').forEach(b => b.onclick = () => { lang = b.dataset.l; apply(); });
+  apply();
+
+  // Nedräkning till julafton (Wigilia) 24 dec 2026 kl 18:00 lokal tid
+  const target = new Date(2026, 11, 24, 18, 0, 0).getTime();
+  function tick() {
+    let s = Math.max(0, Math.floor((target - Date.now()) / 1000));
+    $('cd').textContent = Math.floor(s / 86400); s %= 86400;
+    $('ch').textContent = String(Math.floor(s / 3600)).padStart(2, '0'); s %= 3600;
+    $('cm').textContent = String(Math.floor(s / 60)).padStart(2, '0');
+    $('cs').textContent = String(s % 60).padStart(2, '0');
+  }
+  tick(); setInterval(tick, 1000);
+
+  // Ljusslinga
+  for (let i = 0; i < Math.ceil(innerWidth / 34); i++) $('lights').append(document.createElement('i'));
+
+  // Snö + konfetti
+  const snow = $('snow'), sctx = snow.getContext('2d'), fx = $('fx'), fctx = fx.getContext('2d');
+  let W, H;
+  function resize() {
+    const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+    [snow, fx].forEach(c => { c.width = W * d; c.height = H * d; c.getContext('2d').setTransform(d, 0, 0, d, 0, 0); });
+  }
+  resize(); addEventListener('resize', resize);
+  const flakes = Array.from({ length: Math.min(160, Math.floor(innerWidth / 6)) }, () => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 2.6 + .6, s: Math.random() * .8 + .3, d: Math.random() * 7 }));
+  const parts = [], COLORS = ['#ff3b4e', '#ffd34d', '#3bff7a', '#4ab8ff', '#ffffff', '#ff8ad8'];
+  function confetti(n, x, y, p) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, v = (Math.random() * .8 + .2) * p;
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - p * .4, w: 6 + Math.random() * 8, h: 4 + Math.random() * 6, rot: Math.random() * 6, vr: (Math.random() - .5) * .4, c: COLORS[i % 6], life: 1, dec: .003 + Math.random() * .003 });
+    }
+  }
+  (function frame() {
+    sctx.clearRect(0, 0, W, H); sctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (const f of flakes) {
+      f.d += .01; f.y += f.s; f.x += Math.sin(f.d) * .5;
+      if (f.y > H + 5) { f.y = -5; f.x = Math.random() * W; }
+      sctx.beginPath(); sctx.arc(f.x, f.y, f.r, 0, 7); sctx.fill();
+    }
+    fctx.clearRect(0, 0, W, H);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i]; p.life -= p.dec;
+      if (p.life <= 0 || p.y > H + 40) { parts.splice(i, 1); continue; }
+      p.vx *= .985; p.vy = p.vy * .985 + .18; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      fctx.globalAlpha = Math.min(1, p.life * 1.5);
+      fctx.save(); fctx.translate(p.x, p.y); fctx.rotate(p.rot); fctx.scale(1, Math.cos(p.rot * 2));
+      fctx.fillStyle = p.c; fctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); fctx.restore();
+    }
+    fctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  })();
+  // Konfettiexplosion när "2026" och "Ciebie!" landar
+  setTimeout(() => confetti(160, W / 2, H * .3, 15), 1900);
+  setTimeout(() => { confetti(90, 0, H * .8, 14); confetti(90, W, H * .8, 14); }, 3400);
+
+  // Uppläsarens intro (samma radioröst som i avslöjandet)
+  const ad = $('ad');
+  $('listen').onclick = () => {
+    if (ad.paused) { ad.currentTime = ad.ended ? 0 : ad.currentTime; ad.play().catch(() => {}); confetti(120, W / 2, H * .85, 16); }
+    else ad.pause();
   };
-
-  const saved = load(STORE);
-  if (saved && saved.links) render(saved);
+  ad.onplay = ad.onpause = ad.onended = () => {
+    $('listen').classList.toggle('playing', !ad.paused);
+    $('listen').textContent = ad.paused ? TXT[lang].listen : TXT[lang].stop;
+  };
 })();
 </script>
 </body>

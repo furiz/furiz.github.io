@@ -250,8 +250,21 @@
   const hash = location.hash.slice(1);
   try {
     if (hash === 'demo' || hash.startsWith('demo-')) {
-      const l = hash.split('-')[1] || 'pl';
-      data = { g: 'Tobias', r: l === 'pl' ? 'Święty Mikołaj' : l === 'sv' ? 'Tomtefar' : 'Santa Claus', l, m: '', y: new Date().getFullYear() };
+      // #demo, #demo-en, #demo-adam, #demo-adam-ula, #demo-adam-en …
+      const DEMO = ['Bartek', 'Kamila', 'Danusia', 'Krzysztof', 'Adam', 'Ula', 'Tobias'];
+      const find = (s) => DEMO.findIndex(n => n.toLowerCase() === s);
+      const parts = hash.split('-').slice(1).map(s => decodeURIComponent(s).toLowerCase());
+      let l = 'pl', who = [];
+      parts.forEach(p => { if (Object.keys(TXT).includes(p)) l = p; else if (find(p) >= 0) who.push(find(p)); });
+      let g, r;
+      if (who.length) {
+        g = DEMO[who[0]];
+        r = who.length > 1 ? DEMO[who[1]] : DEMO[(who[0] + 1) % DEMO.length];
+      } else {
+        g = 'Tobias';
+        r = l === 'pl' ? 'Święty Mikołaj' : 'Santa Claus';
+      }
+      data = { g, r, l, m: '', y: new Date().getFullYear() };
     } else {
       data = Santa.decode(hash);
     }

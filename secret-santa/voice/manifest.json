@@ -2,17 +2,21 @@
  "pl": [
   "build",
   "drum",
+  "hello_adam",
   "hello_bartek",
   "hello_danusia",
   "hello_kamila",
   "hello_krzysztof",
   "hello_tobias",
+  "hello_ula",
   "intro",
   "name_adam",
   "name_bartek",
   "name_danusia",
   "name_kamila",
+  "name_krzysztof",
   "name_tobias",
+  "name_ula",
   "outro",
   "tease"
  ]

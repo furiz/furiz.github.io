@@ -29,7 +29,7 @@
       "name": "[shouting] {name}!",
       "name_tobias": "[shouting] Tobias! [laughs] Tak, ten Szwed!",
       "outro": "[excited] Święta dwa tysiące dwadzieścia sześć! Tajny Mikołaj! Prezent ma być wielki, a sekret jeszcze większy! [whispers] Pamiętaj: ani słowa. [shouting] Wesołych Świąt!",
-      "hello_adam": "[excited] Ahh, Adam! Nasz kochany dziadek! Leo i Liwia mają najlepszego dziadka na świecie! Słuchaj uważnie, bo to jest tylko dla ciebie!",
+      "hello_adam": "[excited] Ahh, Adam! Nasz kochany dziadek! Leo, Antoni i Liwia mają najlepszego dziadka na świecie! Słuchaj uważnie, bo to jest tylko dla ciebie!",
       "hello_ula": "[excited] Ula! [warmly] Kobieta, dla której pulsuje niebiesko-żółte serce Tobiasa! [excited] Słuchaj uważnie, bo to jest tylko dla ciebie!"
     },
     "en": {
@@ -43,7 +43,7 @@
       "name": "[shouting] {name}!",
       "name_tobias": "[shouting] Tobias! [laughs] Yes, the Swede!",
       "outro": "[excited] Christmas twenty twenty-six! Secret Santa! The present should be big, and the secret even bigger! [whispers] Remember: not a word. [shouting] Merry Christmas!",
-      "hello_adam": "[excited] Ahh, Adam! Our dear grandpa! Leo and Liwia have the best grandpa in the world! Listen closely, this one is just for you!",
+      "hello_adam": "[excited] Ahh, Adam! Our dear grandpa! Leo, Antoni and Liwia have the best grandpa in the world! Listen closely, this one is just for you!",
       "hello_ula": "[excited] Ula! [warmly] The woman for whom Tobias's blue-and-yellow heart beats! [excited] Listen closely, this one is just for you!"
     }
   }
